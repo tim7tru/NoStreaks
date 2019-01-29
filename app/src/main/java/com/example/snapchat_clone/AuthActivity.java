@@ -46,6 +46,8 @@ public class AuthActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
                                 Toast.makeText(AuthActivity.this, "Logged In Successfully", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent (getApplicationContext(), UserActivity.class);
+                                startActivity(intent);
                             } else {
                                 Toast.makeText(AuthActivity.this, "Could Not Log In :(", Toast.LENGTH_SHORT).show();
                             }
@@ -62,6 +64,8 @@ public class AuthActivity extends AppCompatActivity {
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
                                 Toast.makeText(AuthActivity.this, "Signed Up Successfully", Toast.LENGTH_SHORT).show();
+                                Intent intent = new Intent (getApplicationContext(), UserActivity.class);
+                                startActivity(intent);
                             } else {
                                 Toast.makeText(AuthActivity.this, "Could Not Sign Up :(", Toast.LENGTH_SHORT).show();
                             }
