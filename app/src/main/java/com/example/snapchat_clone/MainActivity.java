@@ -1,10 +1,26 @@
 package com.example.snapchat_clone;
 
+import android.content.Intent;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
 public class MainActivity extends AppCompatActivity {
+
+    /*
+        Move to the LogInActivity
+    */
+    public void logIn (View view) {
+        Log.i("Button pressed", "Log In");
+        Intent intent = new Intent(getApplicationContext(), LogInActivity.class);
+        startActivity(intent);
+    }
+
+    public void signUp (View view) {
+        Log.i("Button pressed", "Sign Up");
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -16,7 +16,8 @@
         app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/snapchat" />
+        app:srcCompat="@drawable/snapchat"
+        android:contentDescription="TODO" />
 
     <Button
         android:id="@+id/button"
@@ -24,7 +25,8 @@
         android:layout_height="64dp"
         android:background="@color/colorAccent"
         android:fontFamily="@font/roboto_medium"
-        android:text="LOG IN"
+        android:onClick="logIn"
+        android:text="@string/log_in"
         android:textColor="@android:color/background_light"
         android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/button2"
@@ -38,7 +40,8 @@
         android:layout_height="64dp"
         android:background="@android:color/holo_blue_dark"
         android:fontFamily="@font/roboto_medium"
-        android:text="SIGN UP"
+        android:onClick="signUp"
+        android:text="@string/sign_up"
         android:textColor="@android:color/background_light"
         android:textSize="18sp"
         app:layout_constraintBottom_toBottomOf="parent"
