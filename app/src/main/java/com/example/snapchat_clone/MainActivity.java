@@ -1,31 +1,35 @@
 package com.example.snapchat_clone;
 
 import android.content.Intent;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 public class MainActivity extends AppCompatActivity {
 
-    /*
-        Move to the LogInActivity
-    */
-    public void logIn (View view) {
-        Log.i("Button pressed", "Log In");
-        Intent intent = new Intent(getApplicationContext(), LogInActivity.class);
+    private FirebaseAuth mAuth;
+
+    public void onClick (View view) {
+        Button buttonPressed = (Button) view;
+        Log.i("Button Pressed", buttonPressed.getText().toString());
+        Intent intent = new Intent (getApplicationContext(), AuthActivity.class);
+        intent.putExtra("function", buttonPressed.getText().toString());
         startActivity(intent);
     }
 
-    public void signUp (View view) {
-        Log.i("Button pressed", "Sign Up");
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Initialize Firebase Auth
+        mAuth = FirebaseAuth.getInstance();
     }
 
     /*
@@ -45,6 +49,19 @@ public class MainActivity extends AppCompatActivity {
                         | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             );
+        }
+    }
+
+    /*
+    Sign out any user that may be logged in on the start of the app
+ */
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = mAuth.getCurrentUser();
+        if (currentUser != null) {
+            mAuth.signOut();
         }
     }
 }
