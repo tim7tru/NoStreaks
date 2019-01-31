@@ -51,6 +51,7 @@ public class sendFragment extends Fragment {
         takePicture = sendView.findViewById(R.id.pictureButton);
         imageView = sendView.findViewById(R.id.imageView);
 
+
         takePicture.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

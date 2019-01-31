@@ -48,13 +48,14 @@ public class UserActivity extends AppCompatActivity {
             switch (i) {
                 case 0: return new listFragment();
                 case 1: return new sendFragment();
+                case 2: return new MapsFragment();
                 default: return new listFragment();
             }
         }
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
     }
 

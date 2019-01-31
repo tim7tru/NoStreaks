@@ -90,7 +90,7 @@ public class AuthActivity extends AppCompatActivity {
 
         /*
             OnClickListener for the back button to back to the home screen
-         */
+                */
         backImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
