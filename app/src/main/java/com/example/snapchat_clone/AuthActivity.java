@@ -18,8 +18,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -31,7 +35,8 @@ public class AuthActivity extends AppCompatActivity {
     EditText displayNameEditText;
     private FirebaseAuth mAuth;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
-
+	DatabaseReference mRootRef = database.getReference();
+	DatabaseReference mUsersRef = mRootRef.child("Users");
     /*
         OnClick method for button
      */
@@ -40,9 +45,11 @@ public class AuthActivity extends AppCompatActivity {
         String buttonText = buttonPressed.getText().toString();
 
         if (buttonText.equals("LOG IN")) {
-            Log.i("Auth", "LOG IN");
             // Logging in existing users
+
+	        // If an email is inputted to the login edit text
             if (emailText.getText().toString().contains("@")) {
+            	// sign in method with email and password
                 mAuth.signInWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                             @Override
@@ -56,8 +63,47 @@ public class AuthActivity extends AppCompatActivity {
                                 }
                             }
                         });
-            } else {
+            }
+            // If a username is inputted into the login edit text
+            else {
+            	/*
+            	 * No firebase default method to log in with a username
+            	 * Therefore must get email using username as a query
+            	 */
+            	final String inputUsername = emailText.getText().toString();
 
+            	// Query to get email
+	            Query nameQuery = mUsersRef.orderByChild("displayName").equalTo(inputUsername);
+	            nameQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+		            @Override
+		            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+			            if (dataSnapshot.exists()) {
+			            	String email = "";
+			            	// Getting the email
+			            	for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+			            		email = (String) snapshot.child("email").getValue();
+				            }
+
+				            // Logging in with the queried email
+				            mAuth.signInWithEmailAndPassword(email, passwordText.getText().toString()).addOnCompleteListener(AuthActivity.this, new OnCompleteListener<AuthResult>() {
+					            @Override
+					            public void onComplete(@NonNull Task<AuthResult> task) {
+						            if (task.isSuccessful()) {
+							            Toast.makeText(AuthActivity.this, "Logged In Successfully", Toast.LENGTH_SHORT).show();
+							            Intent intent = new Intent(getApplicationContext(), UserActivity.class);
+							            startActivity(intent);
+						            } else {
+							            Toast.makeText(AuthActivity.this, "Could Not Log In :(", Toast.LENGTH_SHORT).show();
+						            }
+					            }
+				            });
+			            } else {
+							Toast.makeText(AuthActivity.this, "There is no account under this username.", Toast.LENGTH_SHORT).show();
+			            }
+		            }
+		            @Override
+		            public void onCancelled(@NonNull DatabaseError databaseError) { }
+	            });
             }
 
         } else if (buttonText.equals("SIGN UP")) {
@@ -65,30 +111,45 @@ public class AuthActivity extends AppCompatActivity {
             displayNameTextView.setVisibility(View.VISIBLE);
             displayNameEditText.setVisibility(View.VISIBLE);
             loginNameTextView.setText(R.string.email);
-            // Signing up new users
-            mAuth.createUserWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                User user = new User(emailText.getText().toString(), FirebaseAuth.getInstance().getUid());
-                                database.getReference("Users").child(displayNameEditText.getText().toString()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
-                                    @Override
-                                    public void onComplete(@NonNull Task<Void> task) {
-                                        if (task.isSuccessful()) {
-                                            Toast.makeText(AuthActivity.this, "Signed Up Successfully", Toast.LENGTH_SHORT).show();
-                                            Intent intent = new Intent (getApplicationContext(), UserActivity.class);
-                                            startActivity(intent);
-                                        } else {
-                                            Toast.makeText(AuthActivity.this, "There was a problem signing up!", Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                });
-                            } else {
-                                Toast.makeText(AuthActivity.this, "Could Not Sign Up :(", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
+
+            // Query to check if the inputted username is already taken!
+            Query nameQuery = mUsersRef.orderByChild("displayName").equalTo(displayNameEditText.getText().toString());
+            nameQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+	            @Override
+	            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+		            if (dataSnapshot.exists()) {
+		            	// If the query finds a result, the username is already in the database and is taken
+		            	Toast.makeText(AuthActivity.this, "This username already exists, try another.", Toast.LENGTH_SHORT).show();
+		            } else {
+		            	// if there is no result, sign up the user!
+			            mAuth.createUserWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
+					            .addOnCompleteListener(AuthActivity.this, new OnCompleteListener<AuthResult>() {
+						            @Override
+						            public void onComplete(@NonNull Task<AuthResult> task) {
+							            if (task.isSuccessful()) {
+								            User user = new User(displayNameEditText.getText().toString(), emailText.getText().toString(), FirebaseAuth.getInstance().getUid());
+								            database.getReference("Users").child(displayNameEditText.getText().toString()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
+									            @Override
+									            public void onComplete(@NonNull Task<Void> task) {
+										            if (task.isSuccessful()) {
+											            Toast.makeText(AuthActivity.this, "Signed Up Successfully", Toast.LENGTH_SHORT).show();
+											            Intent intent = new Intent (getApplicationContext(), UserActivity.class);
+											            startActivity(intent);
+										            } else {
+											            Toast.makeText(AuthActivity.this, "There was a problem signing up!", Toast.LENGTH_SHORT).show();
+										            }
+									            }
+								            });
+							            } else {
+								            Toast.makeText(AuthActivity.this, "Could Not Sign Up :(", Toast.LENGTH_SHORT).show();
+							            }
+						            }
+					            });
+		            }
+	            }
+	            @Override
+	            public void onCancelled(@NonNull DatabaseError databaseError) { }
+            });
         }
     }
 
