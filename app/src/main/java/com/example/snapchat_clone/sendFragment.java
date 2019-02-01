@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -35,6 +37,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 
 /**
@@ -45,11 +48,13 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     Camera camera;
     SurfaceView surfaceView;
     SurfaceHolder surfaceHolder;
-    Button captureButton;
+    ImageView captureButton;
+    ImageView imageView;
+    ImageView deleteImage;
 
     Camera.PictureCallback jpegCallback;
 
-    final int CAMERA_REQEST_CODE = 1;
+    final int CAMERA_REQUEST_CODE = 1;
 
 
     public sendFragment() {
@@ -62,17 +67,46 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                              Bundle savedInstanceState) {
 
         final View sendView = inflater.inflate(R.layout.fragment_send, container, false);
+        getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
         surfaceView = sendView.findViewById(R.id.surfaceView);
         captureButton = sendView.findViewById(R.id.captureButton);
+        imageView = sendView.findViewById(R.id.imageView);
+        deleteImage = sendView.findViewById(R.id.deleteImage);
+
 
         jpegCallback = new Camera.PictureCallback(){
 
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
-                // to construct the picture in the preview
+                // to construct the picture in the preview using a bitmap (imageView)
+                if (data != null) {
+                    // converting the picture taken into a bitmap
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+
+                    surfaceView.setVisibility(View.INVISIBLE);
+                    captureButton.setVisibility(View.INVISIBLE);
+                    imageView.setVisibility(View.VISIBLE);
+                    deleteImage.setVisibility(View.VISIBLE);
+
+                    // Rotate the Image
+                    Bitmap rotatedBitmap = rotate(bitmap);
+
+                    // Set the image to the imageView
+                    imageView.setImageBitmap(rotatedBitmap);
+                }
             }
         };
+
+        deleteImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                imageView.setVisibility(View.INVISIBLE);
+                deleteImage.setVisibility(View.INVISIBLE);
+                surfaceView.setVisibility(View.VISIBLE);
+                captureButton.setVisibility(View.VISIBLE);
+            }
+        });
 
         // To capture the image when the button is pressed and to show it in the preview
         captureButton.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +121,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         // Setting the Camera Permissions
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             // No permission for camera -> need to ask permission
-            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_REQEST_CODE);
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.CAMERA}, CAMERA_REQUEST_CODE);
         } else {
             // There was permission granted for the camera
             surfaceHolder.addCallback(this);
@@ -95,6 +129,17 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         }
 
         return sendView;
+    }
+
+    private Bitmap rotate(Bitmap bitmap) {
+        // to get width and height of bitmap
+        int width = bitmap.getWidth();
+        int heigth = bitmap.getHeight();
+
+        Matrix matrix = new Matrix();
+        matrix.setRotate(90);
+
+        return Bitmap.createBitmap(bitmap,0,0,width,heigth,matrix,true);
     }
 
     private void captureImage() {
@@ -116,6 +161,20 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
         // focus
         parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+
+        // To find the best image size for your camera
+        Camera.Size bestSize = null;
+        List<Camera.Size> sizeList = camera.getParameters().getSupportedPreviewSizes();
+        bestSize = sizeList.get(0);
+
+        for (int i = 1; i < sizeList.size(); i++) {
+            if (sizeList.get(i).width * sizeList.get(i).height > bestSize.width * bestSize.height) {
+                bestSize = sizeList.get(i);
+            }
+        }
+
+        parameters.setPreviewSize(bestSize.width, bestSize.height);
+        camera.setParameters(parameters);
 
         // setting the preview display
         try {
@@ -141,7 +200,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
-            case CAMERA_REQEST_CODE: {
+            case CAMERA_REQUEST_CODE: {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // There was permission granted for the camera
                     surfaceHolder.addCallback(this);
