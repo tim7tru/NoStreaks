@@ -1,6 +1,7 @@
 package com.example.snapchat_clone;
 
 import android.Manifest;
+import android.app.DownloadManager;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -11,6 +12,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,7 +25,14 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -44,67 +53,47 @@ public class MapsFragment extends Fragment {
 	GoogleMap mGoogleMap;
 	MapView mapView;
 	View mView;
-	LocationListener locationListener;
-	LocationManager locationManager;
-	String rawInfo;
-	Float latitude, longitude;
+	FirebaseDatabase database = FirebaseDatabase.getInstance();
+	DatabaseReference mRootRef = database.getReference();
+	DatabaseReference mUserRef = mRootRef.child("Users");
+	Query latQuery, lngQuery;
+	ArrayList<String> displayNames;
+	ArrayList<Double> latitudes;
+	ArrayList<Double> longitudes;
+
 
 	public MapsFragment() {
 		// Required empty public constructor
 	}
 
 	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-		if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-			if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
-			}
-		}
-	}
-
-	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		locationManager = (LocationManager) getActivity().getApplicationContext().getSystemService(Context.LOCATION_SERVICE);
-		locationListener = new LocationListener() {
-			@Override
-			public void onLocationChanged(Location location) {
-				rawInfo = location.toString();
-				Pattern p = Pattern.compile("gps (.*?) hAcc=");
-				Matcher m = p.matcher(rawInfo);
+		displayNames = new ArrayList<>();
+		latitudes = new ArrayList<>();
+		longitudes = new ArrayList<>();
 
-				while (m.find()) {
-					rawInfo = m.group(1);
+		latQuery = mUserRef.orderByKey();
+		latQuery.addValueEventListener(new ValueEventListener() {
+			@Override
+			public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+				if (dataSnapshot.exists()) {
+					for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+						latitudes.add((Double) snapshot.child("latitude").getValue(Double.class));
+						longitudes.add((Double) snapshot.child("longitude").getValue(Double.class));
+						displayNames.add((String) snapshot.child("displayName").getValue());
+					}
+					Log.i("latitudes", latitudes.toString());
+					Log.i("longitudes", longitudes.toString());
+					Log.i("display names", displayNames.toString());
 				}
-
-				String[] splitInfo = rawInfo.split(",");
-				latitude = Float.parseFloat(splitInfo[0]);
-				longitude = Float.parseFloat(splitInfo[1]);
 			}
 
 			@Override
-			public void onStatusChanged(String provider, int status, Bundle extras) {
+			public void onCancelled(@NonNull DatabaseError databaseError) {
 
 			}
-
-			@Override
-			public void onProviderEnabled(String provider) {
-
-			}
-
-			@Override
-			public void onProviderDisabled(String provider) {
-
-			}
-		};
-
-
-		if (ContextCompat.checkSelfPermission(getActivity().getApplicationContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-			ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-		} else {
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
-		}
+		});
 	}
 
 	@Override
@@ -136,7 +125,6 @@ public class MapsFragment extends Fragment {
 			 * Creates the map / houses initial map settings
 			 */
 			public void onMapReady(GoogleMap googleMap) {
-
 				mGoogleMap = googleMap;
 
 				// Map setting / Map Type
