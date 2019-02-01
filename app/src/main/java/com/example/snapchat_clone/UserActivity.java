@@ -1,8 +1,15 @@
 package com.example.snapchat_clone;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.Uri;
+import android.os.Parcel;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -11,27 +18,53 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.internal.firebase_auth.zzcz;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.FirebaseUserMetadata;
+import com.google.firebase.auth.UserInfo;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.IgnoreExtraProperties;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class UserActivity extends AppCompatActivity {
 
 	FirebaseDatabase database = FirebaseDatabase.getInstance();
 	FirebaseUser user;
 	DatabaseReference mRootRef = database.getReference();
-	DatabaseReference mConditionRef = mRootRef.child("users");
+	DatabaseReference mUserRef = mRootRef.child("Users");
+	LocationManager locationManager;
+	LocationListener locationListener;
 
     private FirebaseAuth mAuth;
 
-	@Override
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
+            }
+        }
+    }
+
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
@@ -39,11 +72,74 @@ public class UserActivity extends AppCompatActivity {
         ViewPager viewPager = findViewById(R.id.viewPager);
         viewPager.setAdapter(new pageAdapter(getSupportFragmentManager()));
 
+        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        locationListener = new LocationListener() {
+            @Override
+            public void onLocationChanged(Location location) {
+                String rawInfo = location.toString();
+                Pattern p = Pattern.compile("gps (.*?) hAcc=");
+                Matcher m = p.matcher(rawInfo);
+
+                while (m.find()) {
+                    rawInfo = m.group(1);
+                }
+
+                String[] splitInfo = rawInfo.split(",");
+                final float latitude = Float.parseFloat(splitInfo[0]);
+                final float longitude = Float.parseFloat(splitInfo[1]);
+				String uniqueID = mAuth.getCurrentUser().getUid();
+				Log.i("unique id", uniqueID);
+
+				Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(uniqueID);
+				uniqueIdQuery.addListenerForSingleValueEvent(new ValueEventListener() {
+					@Override
+					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+						if (dataSnapshot.exists()) {
+							String username = "";
+							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+								username = (String) snapshot.child("displayName").getValue();
+							}
+							mUserRef.child(username).child("longitude").setValue(longitude);
+							mUserRef.child(username).child("latitude").setValue(latitude);
+						}
+					}
+
+					@Override
+					public void onCancelled(@NonNull DatabaseError databaseError) {
+
+					}
+				});
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+
+            }
+
+            @Override
+            public void onProviderEnabled(String provider) {
+
+            }
+
+            @Override
+            public void onProviderDisabled(String provider) {
+
+            }
+        };
+
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
 	    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},1);
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        } else {
+            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
+        }
     }
 
 	/*
