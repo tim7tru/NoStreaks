@@ -31,7 +31,6 @@ import java.io.ByteArrayOutputStream;
  */
 public class sendFragment extends Fragment {
 
-    Button takePicture;
     ImageView imageView;
 
     private static final int REQUEST_IMAGE_CAPTURE = 12345;
@@ -49,16 +48,6 @@ public class sendFragment extends Fragment {
         final View sendView = inflater.inflate(R.layout.fragment_send, container, false);
 
         imageView = sendView.findViewById(R.id.imageView);
-
-        takePicture.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
-            }
-        });
-
-        // Inflate the layout for this fragment
         return sendView;
     }
 

@@ -18,6 +18,8 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class AuthActivity extends AppCompatActivity {
 
@@ -25,9 +27,10 @@ public class AuthActivity extends AppCompatActivity {
     EditText passwordText;
     Button loginButton;
     ImageView backImage;
-    TextView titleText;
-
+    TextView titleText, displayNameTextView, loginNameTextView;
+    EditText displayNameEditText;
     private FirebaseAuth mAuth;
+    FirebaseDatabase database = FirebaseDatabase.getInstance();
 
     /*
         OnClick method for button
@@ -38,34 +41,49 @@ public class AuthActivity extends AppCompatActivity {
 
         if (buttonText.equals("LOG IN")) {
             Log.i("Auth", "LOG IN");
-
             // Logging in existing users
-            mAuth.signInWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if (task.isSuccessful()) {
-                                Toast.makeText(AuthActivity.this, "Logged In Successfully", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent (getApplicationContext(), UserActivity.class);
-                                startActivity(intent);
-                            } else {
-                                Toast.makeText(AuthActivity.this, "Could Not Log In :(", Toast.LENGTH_SHORT).show();
+            if (emailText.getText().toString().contains("@")) {
+                mAuth.signInWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
+                        .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(AuthActivity.this, "Logged In Successfully", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(getApplicationContext(), UserActivity.class);
+                                    startActivity(intent);
+                                } else {
+                                    Toast.makeText(AuthActivity.this, "Could Not Log In :(", Toast.LENGTH_SHORT).show();
+                                }
                             }
-                        }
-                    });
+                        });
+            } else {
+
+            }
 
         } else if (buttonText.equals("SIGN UP")) {
             Log.i("Auth", "SIGN UP");
-
+            displayNameTextView.setVisibility(View.VISIBLE);
+            displayNameEditText.setVisibility(View.VISIBLE);
+            loginNameTextView.setText(R.string.email);
             // Signing up new users
             mAuth.createUserWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
                     .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                         @Override
                         public void onComplete(@NonNull Task<AuthResult> task) {
                             if (task.isSuccessful()) {
-                                Toast.makeText(AuthActivity.this, "Signed Up Successfully", Toast.LENGTH_SHORT).show();
-                                Intent intent = new Intent (getApplicationContext(), UserActivity.class);
-                                startActivity(intent);
+                                User user = new User(emailText.getText().toString(), FirebaseAuth.getInstance().getUid());
+                                database.getReference("Users").child(displayNameEditText.getText().toString()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<Void> task) {
+                                        if (task.isSuccessful()) {
+                                            Toast.makeText(AuthActivity.this, "Signed Up Successfully", Toast.LENGTH_SHORT).show();
+                                            Intent intent = new Intent (getApplicationContext(), UserActivity.class);
+                                            startActivity(intent);
+                                        } else {
+                                            Toast.makeText(AuthActivity.this, "There was a problem signing up!", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                });
                             } else {
                                 Toast.makeText(AuthActivity.this, "Could Not Sign Up :(", Toast.LENGTH_SHORT).show();
                             }
@@ -79,11 +97,14 @@ public class AuthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
+        displayNameEditText = findViewById(R.id.displayNameEditText);
         emailText = findViewById(R.id.emailText);
         passwordText = findViewById(R.id.passwordText);
         loginButton = findViewById(R.id.loginButton);
         backImage = findViewById(R.id.backImage);
         titleText = findViewById(R.id.titleText);
+        displayNameTextView = findViewById(R.id.displayNameTextView);
+        loginNameTextView = findViewById(R.id.loginNameTextView);
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -105,9 +126,18 @@ public class AuthActivity extends AppCompatActivity {
         // Setting the text of the title and button depending if log in or sign up was clicked
         Intent intent = getIntent();
         String function = intent.getStringExtra("function");
-        loginButton.setText(function);
-        titleText.setText(function);
-
+        if (function.equals("LOG IN")) {
+            loginButton.setText(function);
+            displayNameEditText.setVisibility(View.INVISIBLE);
+            displayNameTextView.setVisibility(View.INVISIBLE);
+            loginNameTextView.setText(R.string.email_or_username);
+        } else if (function.equals("SIGN UP")){
+            titleText.setText(function);
+	        loginButton.setText(function);
+	        displayNameTextView.setVisibility(View.VISIBLE);
+            displayNameEditText.setVisibility(View.VISIBLE);
+            loginNameTextView.setText(R.string.email);
+        }
 
         /*
             EditText listener to enable/disable the log in button depending on if the EditTexts are filled out or not

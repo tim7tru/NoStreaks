@@ -2,6 +2,8 @@
     <string name="app_name">snapchat-clone</string>
     <string name="log_in">LOG IN</string>
     <string name="sign_up">SIGN UP</string>
+    <string name="email">EMAIL</string>
+    <string name="email_or_username">EMAIL OR USERNAME</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>

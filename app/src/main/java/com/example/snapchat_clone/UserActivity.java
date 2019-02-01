@@ -2,6 +2,7 @@ package com.example.snapchat_clone;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -13,13 +14,24 @@ import android.os.Bundle;
 import android.view.View;
 
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.IgnoreExtraProperties;
+import com.google.firebase.database.ValueEventListener;
 
 public class UserActivity extends AppCompatActivity {
 
+	FirebaseDatabase database = FirebaseDatabase.getInstance();
+	FirebaseUser user;
+	DatabaseReference mRootRef = database.getReference();
+	DatabaseReference mConditionRef = mRootRef.child("users");
+
     private FirebaseAuth mAuth;
 
-    @Override
+	@Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
@@ -30,14 +42,16 @@ public class UserActivity extends AppCompatActivity {
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
+	    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},1);
         }
     }
 
-    /*
-        The pageAdapter for viewPager to implement the fragments
-     */
+	/*
+			The pageAdapter for viewPager to implement the fragments
+		 */
     private class pageAdapter extends FragmentPagerAdapter {
 
         public pageAdapter(FragmentManager fragmentManager) {
