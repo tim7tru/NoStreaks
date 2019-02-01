@@ -44,9 +44,6 @@ public class UserActivity extends AppCompatActivity {
 
 	    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},1);
-        }
     }
 
 	/*
