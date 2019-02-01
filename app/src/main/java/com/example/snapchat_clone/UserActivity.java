@@ -50,6 +50,7 @@ public class UserActivity extends AppCompatActivity {
 	DatabaseReference mUserRef = mRootRef.child("Users");
 	LocationManager locationManager;
 	LocationListener locationListener;
+	static String uniqueID;
 
     private FirebaseAuth mAuth;
 
@@ -87,7 +88,7 @@ public class UserActivity extends AppCompatActivity {
                 String[] splitInfo = rawInfo.split(",");
                 final float latitude = Float.parseFloat(splitInfo[0]);
                 final float longitude = Float.parseFloat(splitInfo[1]);
-				String uniqueID = mAuth.getCurrentUser().getUid();
+				uniqueID = mAuth.getCurrentUser().getUid();
 				Log.i("unique id", uniqueID);
 
 				Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(uniqueID);
