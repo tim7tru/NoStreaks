@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Camera;
 import android.media.ExifInterface;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -23,6 +24,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.VideoView;
 
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
 import java.io.ByteArrayOutputStream;
 
 
@@ -32,6 +36,7 @@ import java.io.ByteArrayOutputStream;
 public class sendFragment extends Fragment {
 
     ImageView imageView;
+    private StorageReference mStorageRef;
 
     private static final int REQUEST_IMAGE_CAPTURE = 12345;
 
@@ -48,6 +53,16 @@ public class sendFragment extends Fragment {
         final View sendView = inflater.inflate(R.layout.fragment_send, container, false);
 
         imageView = sendView.findViewById(R.id.imageView);
+
+        mStorageRef = FirebaseStorage.getInstance().getReference();
+
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(intent, REQUEST_IMAGE_CAPTURE);
+            }
+        });
         return sendView;
     }
 
@@ -64,6 +79,7 @@ public class sendFragment extends Fragment {
 
             // converting byte array to Bitmap
             Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+
             imageView.setImageBitmap(bmp);
         }
     }
