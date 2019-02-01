@@ -37,6 +37,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -56,6 +57,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
     final int CAMERA_REQUEST_CODE = 1;
 
+    StorageReference storageReference;
 
     public sendFragment() {
         // Required empty public constructor
@@ -74,6 +76,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         imageView = sendView.findViewById(R.id.imageView);
         deleteImage = sendView.findViewById(R.id.deleteImage);
 
+        // Firebase Storage Reference
+        storageReference = FirebaseStorage.getInstance().getReference();
 
         jpegCallback = new Camera.PictureCallback(){
 
@@ -98,6 +102,9 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             }
         };
 
+        /*
+            To delete the picture taken and to go back to the previous screen to take another picture
+         */
         deleteImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -134,12 +141,12 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     private Bitmap rotate(Bitmap bitmap) {
         // to get width and height of bitmap
         int width = bitmap.getWidth();
-        int heigth = bitmap.getHeight();
+        int height = bitmap.getHeight();
 
         Matrix matrix = new Matrix();
         matrix.setRotate(90);
 
-        return Bitmap.createBitmap(bitmap,0,0,width,heigth,matrix,true);
+        return Bitmap.createBitmap(bitmap,0,0,width,height,matrix,true);
     }
 
     private void captureImage() {
