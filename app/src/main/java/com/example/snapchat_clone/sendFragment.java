@@ -142,7 +142,6 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
                             intent.putExtra("data", filePath);
                             startActivity(intent);
-                            bitmap.recycle();
                         }
                     });
 
