@@ -33,7 +33,7 @@ public class AuthActivity extends AppCompatActivity {
     ImageView backImage;
     TextView titleText, displayNameTextView, loginNameTextView;
     EditText displayNameEditText;
-    private FirebaseAuth mAuth;
+    public static FirebaseAuth mAuth;
     FirebaseDatabase database = FirebaseDatabase.getInstance();
 	DatabaseReference mRootRef = database.getReference();
 	DatabaseReference mUsersRef = mRootRef.child("Users");
