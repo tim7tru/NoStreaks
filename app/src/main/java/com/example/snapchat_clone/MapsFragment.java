@@ -4,10 +4,8 @@ package com.example.snapchat_clone;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
@@ -42,7 +40,7 @@ public class MapsFragment extends Fragment {
 	FirebaseDatabase database = FirebaseDatabase.getInstance();
 	DatabaseReference mRootRef = database.getReference();
 	DatabaseReference mUserRef = mRootRef.child("Users");
-	Query latQuery, lngQuery;
+	Query latQuery;
 	ValueEventListener value;
 
 	//ArrayLists to hold all users names/info
@@ -123,12 +121,12 @@ public class MapsFragment extends Fragment {
 					userId = UserActivity.uniqueID;
 					Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(userId);
 					uniqueIdQuery.addListenerForSingleValueEvent(value);
-
-					try {
-						Thread.sleep(3000);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+//
+//					try {
+//						Thread.sleep(3000);
+//					} catch (Exception e) {
+//						e.printStackTrace();
+//					}
 
 					latitudes.clear();
 					longitudes.clear();
@@ -138,9 +136,6 @@ public class MapsFragment extends Fragment {
 						longitudes.add(snapshot.child("longitude").getValue(Double.class));
 						displayNames.add((String) snapshot.child("displayName").getValue());
 					}
-					Log.i("latitudes", latitudes.toString());
-					Log.i("longitudes", longitudes.toString());
-					Log.i("display names", displayNames.toString());
 
 					mapView.getMapAsync(new OnMapReadyCallback() {
 						@Override
@@ -155,7 +150,6 @@ public class MapsFragment extends Fragment {
 
 							// For dropping a marker at a point on the Map
 							for (int i = 0; i < latitudes.size(); i++) {
-								Log.i("display", userDisplay + "");
 								if (displayNames.get(i).equals(userDisplay)) {
 									if (firstTime) {
 										userLocation = new LatLng(latitudes.get(i), longitudes.get(i));
