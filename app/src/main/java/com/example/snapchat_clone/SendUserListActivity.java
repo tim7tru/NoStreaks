@@ -101,6 +101,26 @@ public class SendUserListActivity extends AppCompatActivity {
         };
         mUser.addListenerForSingleValueEvent(eventListener);
 
+        displayName = UserActivity.username;
+
+        // to find the image count for the current user
+        final DatabaseReference mCount = mUser.child(displayName);
+        final ValueEventListener eventListener1 = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    count = (long) dataSnapshot.child("count").getValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+
+        mCount.addValueEventListener(eventListener1);
+
         // to select which users are selected to send the image too
         userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -129,28 +149,8 @@ public class SendUserListActivity extends AppCompatActivity {
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                displayName = UserActivity.username;
-
-                // to find the image count for the current user
-                final DatabaseReference mCount = mUser.child(displayName);
-                ValueEventListener eventListener1 = new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.exists()) {
-                            count = (long) dataSnapshot.child("count").getValue();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                    }
-                };
-                mCount.addListenerForSingleValueEvent(eventListener1);
-
-
                 final StorageReference myRef = storageReference
-                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count +1)); // specifying which user file the image is going to be stored in
+                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count)); // specifying which user file the image is going to be stored in
 
                 // grabbing the bytearray from the intent
                 Intent intent = getIntent();
@@ -208,13 +208,11 @@ public class SendUserListActivity extends AppCompatActivity {
                                 String photoKey = mPhotos.push().getKey();
                                 mPhotos.child(photoKey).setValue(firebaseUrl.toString());
                             }
-                            Toast.makeText(SendUserListActivity.this, "finished uploading photos!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(SendUserListActivity.this, "Sent photos!", Toast.LENGTH_SHORT).show();
 
-
-                            // TODO: returns to the userlist after finishing sending the photo
                             // return to the list view on finishing sending photo
-//                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
-//                            startActivity(goBack);
+                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
+                            startActivity(goBack);
                         }
                     }
                 });
