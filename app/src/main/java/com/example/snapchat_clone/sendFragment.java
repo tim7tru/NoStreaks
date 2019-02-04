@@ -80,10 +80,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     // firebase storage
     StorageReference storageReference;
 
-    // firebase storage file path
-    String FIREBASE_IMAGE_STORAGE = "photos/users/";
 
-    // firebase database
 
     public sendFragment() {
         // Required empty public constructor
@@ -134,6 +131,10 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                         public void onClick(View v) {
 
                             // move to the SendUserListActivity to select which user you would like to send the image to
+
+                            // TODO: need to figure out why this intent is not working on the actual device, but works on the emulator
+                            // TODO: 1. create a temporary file 2. pass the file path to the other activity 3. get the path and load the image
+                            Toast.makeText(getActivity(), "Moving to the send user list screen!", Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
                             intent.putExtra("data", data);
                             startActivity(intent);

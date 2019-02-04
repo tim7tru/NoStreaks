@@ -13,6 +13,7 @@ import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -39,7 +40,7 @@ public class SendUserListActivity extends AppCompatActivity {
 
     // list
     ArrayList<String> userNames = new ArrayList<>();
-    ArrayList<String> isFollowing = new ArrayList<>();
+    ArrayList<String> sendTo = new ArrayList<>();
 
     // array adapter
     ArrayAdapter<String> arrayAdapter;
@@ -95,15 +96,15 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 // adds the checked user to an array list
                 if (checkedTextView.isChecked()) {
-                    isFollowing.add(userNames.get(position));
+                    sendTo.add(userNames.get(position));
                     Log.i("User Selected: ", userNames.get(position));
                 } else {
                     // removes the selected user from the array list
-                    isFollowing.remove(userNames.get(position));
+                    sendTo.remove(userNames.get(position));
                     Log.i("Delete User: ", userNames.get(position));
                 }
 
-                Log.i("Send to: ", isFollowing.toString());
+                Log.i("Send to: ", sendTo.toString());
             }
         });
 
@@ -114,6 +115,7 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                // TODO: need to add a counter for the number of images so when adding images to firebase storage they all have a different file name
                 final StorageReference myRef = storageReference
                         .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo"); // specifying which user file the image is going to be stored in
 
@@ -152,13 +154,18 @@ public class SendUserListActivity extends AppCompatActivity {
                             Log.i("Firebase URL: ",firebaseUrl.toString());
 
                             // add the image URL into the firebase database
-                            
+                            Log.i("add photo to database: ", "starting to add photo to database");
+
+                            // TODO: for loop to go through sendTo arraylist -> to be able to sent the picture to more than one person
+                            DatabaseReference mPhotos = mUser.child(sendTo.get(0)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
+                            String photoKey = mPhotos.push().getKey();
+                            mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                            Toast.makeText(SendUserListActivity.this, "finished uploading photos!", Toast.LENGTH_SHORT).show();
 
 
                             // return to the list view on finishing sending photo
-                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
-                            startActivity(goBack);
-
+//                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
+//                            startActivity(goBack);
                         }
                     }
                 });
