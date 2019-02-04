@@ -132,8 +132,7 @@ public class SendUserListActivity extends AppCompatActivity {
                 displayName = UserActivity.username;
 
                 // to find the image count for the current user
-                DatabaseReference mCount = mUser.child(displayName);
-                Toast.makeText(SendUserListActivity.this, displayName, Toast.LENGTH_SHORT).show();
+                final DatabaseReference mCount = mUser.child(displayName);
                 ValueEventListener eventListener1 = new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -152,12 +151,6 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 final StorageReference myRef = storageReference
                         .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count +1)); // specifying which user file the image is going to be stored in
-
-                // updating the count in the database for the current user
-                count = count + 1;
-                Map<String, Object> updateCount = new HashMap<>();
-                updateCount.put("count", count);
-                mCount.updateChildren(updateCount);
 
                 // grabbing the bytearray from the intent
                 Intent intent = getIntent();
@@ -203,10 +196,18 @@ public class SendUserListActivity extends AppCompatActivity {
                             // add the image URL into the firebase database
                             Log.i("add photo to database: ", "starting to add photo to database");
 
-                            // TODO: for loop to go through sendTo arraylist -> to be able to sent the picture to more than one person
-                            DatabaseReference mPhotos = mUser.child(sendTo.get(0)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
-                            String photoKey = mPhotos.push().getKey();
-                            mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                            // updating the count in the database for the current user
+                            count = count + 1;
+                            Map<String, Object> updateCount = new HashMap<>();
+                            updateCount.put("count", count);
+                            mCount.updateChildren(updateCount);
+
+                            // putting the image URL into the database for the users the image was sent to
+                            for (int i = 0; i < sendTo.size(); i++) {
+                                DatabaseReference mPhotos = mUser.child(sendTo.get(i)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
+                                String photoKey = mPhotos.push().getKey();
+                                mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                            }
                             Toast.makeText(SendUserListActivity.this, "finished uploading photos!", Toast.LENGTH_SHORT).show();
 
 
