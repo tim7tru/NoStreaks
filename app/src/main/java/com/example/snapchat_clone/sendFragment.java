@@ -135,13 +135,13 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
                             // move to the SendUserListActivity to select which user you would like to send the image to
 
-                            Toast.makeText(getActivity(), "Moving to the send user list screen!", Toast.LENGTH_SHORT).show();
-
+                            // creating a temporary file image to save memory -> bytearray is too large to be passed into the intent
                             String filePath = tempFileImage (getActivity(), rotatedBitmap, "photo");
 
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
                             intent.putExtra("data", filePath);
                             startActivity(intent);
+                            bitmap.recycle();
                         }
                     });
 

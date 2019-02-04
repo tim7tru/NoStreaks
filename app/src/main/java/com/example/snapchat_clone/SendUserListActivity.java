@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -35,6 +37,9 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class SendUserListActivity extends AppCompatActivity {
 
@@ -45,6 +50,10 @@ public class SendUserListActivity extends AppCompatActivity {
     // list
     ArrayList<String> userNames = new ArrayList<>();
     ArrayList<String> sendTo = new ArrayList<>();
+
+    // variables
+    long count = 0;
+    String displayName = "";
 
     // array adapter
     ArrayAdapter<String> arrayAdapter;
@@ -119,9 +128,36 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                // TODO: need to add a counter for the number of images so when adding images to firebase storage they all have a different file name
+
+                displayName = UserActivity.username;
+
+                // to find the image count for the current user
+                DatabaseReference mCount = mUser.child(displayName);
+                Toast.makeText(SendUserListActivity.this, displayName, Toast.LENGTH_SHORT).show();
+                ValueEventListener eventListener1 = new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        if (dataSnapshot.exists()) {
+                            count = (long) dataSnapshot.child("count").getValue();
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                };
+                mCount.addListenerForSingleValueEvent(eventListener1);
+
+
                 final StorageReference myRef = storageReference
-                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo"); // specifying which user file the image is going to be stored in
+                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count +1)); // specifying which user file the image is going to be stored in
+
+                // updating the count in the database for the current user
+                count = count + 1;
+                Map<String, Object> updateCount = new HashMap<>();
+                updateCount.put("count", count);
+                mCount.updateChildren(updateCount);
 
                 // grabbing the bytearray from the intent
                 Intent intent = getIntent();
