@@ -11,6 +11,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.media.ExifInterface;
+import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -32,8 +34,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
 
+import com.google.android.gms.auth.api.signin.internal.Storage;
+import com.google.android.gms.tasks.Continuation;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -52,12 +68,22 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     ImageView captureButton;
     ImageView imageView;
     ImageView deleteImage;
+    ImageView sendButton;
 
+    // image count
+    int imageCount = 0;
+
+    // camera variables
     Camera.PictureCallback jpegCallback;
-
     final int CAMERA_REQUEST_CODE = 1;
 
+    // firebase storage
     StorageReference storageReference;
+
+    // firebase storage file path
+    String FIREBASE_IMAGE_STORAGE = "photos/users/";
+
+    // firebase database
 
     public sendFragment() {
         // Required empty public constructor
@@ -75,6 +101,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         captureButton = sendView.findViewById(R.id.captureButton);
         imageView = sendView.findViewById(R.id.imageView);
         deleteImage = sendView.findViewById(R.id.deleteImage);
+        sendButton = sendView.findViewById(R.id.sendButton);
 
         // Firebase Storage Reference
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -82,22 +109,38 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         jpegCallback = new Camera.PictureCallback(){
 
             @Override
-            public void onPictureTaken(byte[] data, Camera camera) {
+            public void onPictureTaken(final byte[] data, Camera camera) {
                 // to construct the picture in the preview using a bitmap (imageView)
                 if (data != null) {
                     // converting the picture taken into a bitmap
                     Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
 
+                    // changing interface view
                     surfaceView.setVisibility(View.INVISIBLE);
                     captureButton.setVisibility(View.INVISIBLE);
                     imageView.setVisibility(View.VISIBLE);
                     deleteImage.setVisibility(View.VISIBLE);
+                    sendButton.setVisibility(View.VISIBLE);
 
                     // Rotate the Image
                     Bitmap rotatedBitmap = rotate(bitmap);
 
                     // Set the image to the imageView
                     imageView.setImageBitmap(rotatedBitmap);
+
+                    // To send the image to a user -> saves the images in firebase storage
+                    sendButton.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+
+                            // move to the SendUserListActivity to select which user you would like to send the image to
+                            Intent intent = new Intent(getActivity(), SendUserListActivity.class);
+                            intent.putExtra("data", data);
+                            startActivity(intent);
+                        }
+                    });
+
+
                 }
             }
         };
@@ -108,6 +151,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         deleteImage.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                sendButton.setVisibility(View.INVISIBLE);
                 imageView.setVisibility(View.INVISIBLE);
                 deleteImage.setVisibility(View.INVISIBLE);
                 surfaceView.setVisibility(View.VISIBLE);
@@ -134,6 +178,22 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             surfaceHolder.addCallback(this);
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
+
+        // count the number of images already located in the users database
+//        mPhotos.addValueEventListener(new ValueEventListener() {
+//            @Override
+//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                for (DataSnapshot ds : dataSnapshot
+//                        .child("").getChildren()) {
+//
+//                }
+//            }
+//
+//            @Override
+//            public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//            }
+//        });
 
         return sendView;
     }
