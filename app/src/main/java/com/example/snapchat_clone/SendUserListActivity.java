@@ -1,6 +1,8 @@
 package com.example.snapchat_clone;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -30,6 +32,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.util.ArrayList;
 
 public class SendUserListActivity extends AppCompatActivity {
@@ -121,7 +125,14 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 // grabbing the bytearray from the intent
                 Intent intent = getIntent();
-                byte [] data = intent.getByteArrayExtra("data");
+                String filePath = intent.getStringExtra("data");
+                File file = new File(filePath);
+
+                Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.PNG,100,stream);
+                byte [] data = stream.toByteArray();
+                bitmap.recycle();
 
                 // uploading the bytearray into the database
                 final UploadTask uploadTask = myRef.putBytes(data);

@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -52,7 +53,10 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -110,7 +114,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                 // to construct the picture in the preview using a bitmap (imageView)
                 if (data != null) {
                     // converting the picture taken into a bitmap
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
+                    final Bitmap bitmap = BitmapFactory.decodeByteArray(data,0,data.length);
 
                     // changing interface view
                     surfaceView.setVisibility(View.INVISIBLE);
@@ -120,7 +124,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                     sendButton.setVisibility(View.VISIBLE);
 
                     // Rotate the Image
-                    Bitmap rotatedBitmap = rotate(bitmap);
+                    final Bitmap rotatedBitmap = rotate(bitmap);
 
                     // Set the image to the imageView
                     imageView.setImageBitmap(rotatedBitmap);
@@ -132,12 +136,14 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
                             // move to the SendUserListActivity to select which user you would like to send the image to
 
-                            // TODO: need to figure out why this intent is not working on the actual device, but works on the emulator
-                            // TODO: 1. create a temporary file 2. pass the file path to the other activity 3. get the path and load the image
                             Toast.makeText(getActivity(), "Moving to the send user list screen!", Toast.LENGTH_SHORT).show();
+
+                            String filePath = tempFileImage (getActivity(), rotatedBitmap, "photo");
+
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
-                            intent.putExtra("data", data);
+                            intent.putExtra("data", filePath);
                             startActivity(intent);
+                            bitmap.recycle();
                         }
                     });
 
@@ -197,6 +203,23 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 //        });
 
         return sendView;
+    }
+
+    private String tempFileImage(FragmentActivity activity, Bitmap rotatedBitmap, String photo) {
+        File outputDirectory = activity.getCacheDir();
+        File imageFile = new File(outputDirectory, photo + ".jpg");
+
+        OutputStream os;
+        try {
+            os = new FileOutputStream(imageFile);
+            rotatedBitmap.compress(Bitmap.CompressFormat.JPEG,100,os);
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return imageFile.getAbsolutePath();
     }
 
     private Bitmap rotate(Bitmap bitmap) {
