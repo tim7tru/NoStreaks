@@ -174,6 +174,7 @@ public class SendUserListActivity extends AppCompatActivity {
                             Toast.makeText(SendUserListActivity.this, "finished uploading photos!", Toast.LENGTH_SHORT).show();
 
 
+                            // TODO: returns to the userlist after finishing sending the photo
                             // return to the list view on finishing sending photo
 //                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
 //                            startActivity(goBack);
@@ -182,6 +183,9 @@ public class SendUserListActivity extends AppCompatActivity {
                 });
             }
         });
+
+        // count the number of images already located in the users database
+
 
         userList.setAdapter(arrayAdapter);
     }
