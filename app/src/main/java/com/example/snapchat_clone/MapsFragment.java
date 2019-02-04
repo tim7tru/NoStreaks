@@ -1,9 +1,15 @@
 package com.example.snapchat_clone;
 
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -57,6 +63,16 @@ public class MapsFragment extends Fragment {
 	}
 
 	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && requestCode == 2) {
+			if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+				UserActivity.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 500, UserActivity.locationListener);
+			}
+		}
+	}
+
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
@@ -65,6 +81,7 @@ public class MapsFragment extends Fragment {
 		latitudes = new ArrayList<>();
 		longitudes = new ArrayList<>();
 		firstTime = true;
+		userDisplay = UserActivity.username;
 
 		// Value Event Listener to get current user's information
 		// Has its own query
@@ -72,9 +89,7 @@ public class MapsFragment extends Fragment {
 			@Override
 			public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 				if (dataSnapshot.exists()) {
-					userDisplay = "";
 					for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-						userDisplay = (String) snapshot.child("displayName").getValue();
 						userLat = snapshot.child("latitude").getValue(Double.class);
 						userLng = snapshot.child("longitude").getValue(Double.class);
 					}
@@ -87,15 +102,9 @@ public class MapsFragment extends Fragment {
 	}
 
 	@Override
-	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+	public void onStart() {
+		super.onStart();
 
-		//Inflates the fragment
-		mView = inflater.inflate(R.layout.fragment_maps, container, false);
-
-		//Initialize mapView via ID
-		//Create the map view
-		mapView = (MapView) mView.findViewById(R.id.map);
-		mapView.onCreate(savedInstanceState);
 		mapView.onResume();
 
 		//Try Catch initializing the map with host activity context
@@ -116,11 +125,11 @@ public class MapsFragment extends Fragment {
 					uniqueIdQuery.addListenerForSingleValueEvent(value);
 
 					try {
-						wait(100);
+						Thread.sleep(3000);
 					} catch (Exception e) {
 						e.printStackTrace();
-
 					}
+
 					latitudes.clear();
 					longitudes.clear();
 					displayNames.clear();
@@ -146,6 +155,7 @@ public class MapsFragment extends Fragment {
 
 							// For dropping a marker at a point on the Map
 							for (int i = 0; i < latitudes.size(); i++) {
+								Log.i("display", userDisplay + "");
 								if (displayNames.get(i).equals(userDisplay)) {
 									if (firstTime) {
 										userLocation = new LatLng(latitudes.get(i), longitudes.get(i));
@@ -169,6 +179,19 @@ public class MapsFragment extends Fragment {
 			@Override
 			public void onCancelled(@NonNull DatabaseError databaseError) {}
 		});
+	}
+
+	@Override
+	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+		//Inflates the fragment
+
+		mView = inflater.inflate(R.layout.fragment_maps, container, false);
+
+		//Initialize mapView via ID
+		//Create the map view
+		mapView = (MapView) mView.findViewById(R.id.map);
+		mapView.onCreate(savedInstanceState);
 		return mView;
 	}
 }

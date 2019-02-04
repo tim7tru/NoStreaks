@@ -63,7 +63,6 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         // Required empty public constructor
     }
 
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {

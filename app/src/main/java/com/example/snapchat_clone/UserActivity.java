@@ -49,33 +49,48 @@ public class UserActivity extends AppCompatActivity {
 	FirebaseUser user;
 	DatabaseReference mRootRef = database.getReference();
 	DatabaseReference mUserRef = mRootRef.child("Users");
-	LocationManager locationManager;
-	LocationListener locationListener;
+	static LocationManager locationManager;
+	static LocationListener locationListener;
 	static String uniqueID;
+	static String username;
 
     private FirebaseAuth mAuth;
-
-	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-		if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED && requestCode == 2) {
-			if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
-			}
-		}
-	}
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
+	    // Initialize Firebase Auth
+	    mAuth = AuthActivity.mAuth;
+
+	    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
 
         ViewPager viewPager = findViewById(R.id.viewPager);
         viewPager.setAdapter(new pageAdapter(getSupportFragmentManager()));
+	    uniqueID = mAuth.getCurrentUser().getUid();
+	    Log.i("unique id", uniqueID);
+	    locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+	    Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(uniqueID);
 
-        locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
-        locationListener = new LocationListener() {
+	    ValueEventListener value = new ValueEventListener() {
+		    @Override
+		    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+			    if (dataSnapshot.exists()) {
+				    username = "";
+				    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+					    username = (String) snapshot.child("displayName").getValue();
+					    Log.i("Username in UserActivity", username + "");
+				    }
+			    }
+		    }
+
+		    @Override
+		    public void onCancelled(@NonNull DatabaseError databaseError) { }
+	    };
+	    uniqueIdQuery.addListenerForSingleValueEvent(value);
+
+
+	    locationListener = new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {
                 final double latitude = location.getLatitude();
@@ -88,9 +103,10 @@ public class UserActivity extends AppCompatActivity {
 					@Override
 					public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 						if (dataSnapshot.exists()) {
-							String username = "";
+							username = "";
 							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 								username = (String) snapshot.child("displayName").getValue();
+								Log.i("Username in UserActivity", username + "");
 							}
 							mUserRef.child(username).child("longitude").setValue(longitude);
 							mUserRef.child(username).child("latitude").setValue(latitude);
@@ -98,44 +114,25 @@ public class UserActivity extends AppCompatActivity {
 					}
 
 					@Override
-					public void onCancelled(@NonNull DatabaseError databaseError) {
-
-					}
+					public void onCancelled(@NonNull DatabaseError databaseError) {}
 				});
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
+            public void onStatusChanged(String provider, int status, Bundle extras) {}
 
             @Override
-            public void onProviderEnabled(String provider) {
-
-            }
+            public void onProviderEnabled(String provider) { }
 
             @Override
-            public void onProviderDisabled(String provider) {
-
-            }
+            public void onProviderDisabled(String provider) { }
         };
 
-        // Initialize Firebase Auth
-        mAuth = FirebaseAuth.getInstance();
-
-	    FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA},1);
-        }
-	    if (Build.VERSION.SDK_INT < 23) {
-		    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
+	    // CAMERA AND LOCATION PERMISSIONS
+	    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+		    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.CAMERA}, 2);
 	    } else {
-		    if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-			    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 2);
-		    } else {
-			    locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, locationListener);
-		    }
+		    UserActivity.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, UserActivity.locationListener);
 	    }
     }
 
