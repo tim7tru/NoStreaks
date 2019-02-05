@@ -36,7 +36,6 @@ public class listFragment extends Fragment {
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
     ListView usersListView;
     ArrayList<String> usersDisplayName;
-    static String userClicked;
     ArrayAdapter<String> arrayAdapter;
 
     public listFragment() {
@@ -82,8 +81,7 @@ public class listFragment extends Fragment {
 			@Override
 			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 				Intent intent = new Intent(getContext(), ChatActivity.class);
-				userClicked = usersDisplayName.get(position);
-				Log.i("User clicked", userClicked);
+				intent.putExtra("userClicked", usersDisplayName.get(position));
 				startActivity(intent);
 				return true;
 			}

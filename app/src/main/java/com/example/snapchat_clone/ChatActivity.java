@@ -13,7 +13,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import android.content.Intent;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -167,6 +167,13 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_chat);
 
+		Intent intent = getIntent();
+
+		// Defining user's info
+		currentUserUID = mAuth.getCurrentUser().getUid();
+		clickedUserDisplay = intent.getStringExtra("userClicked");
+		currentUserDisplay = UserActivity.username;
+
 		// Defining UI elmeents
 		messageEditText = findViewById(R.id.messageEditText);
 		messageListView = findViewById(R.id.messageListView);
@@ -174,12 +181,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 		backImageView = findViewById(R.id.backImageView);
 		backImageView.setOnClickListener(this);
 		titleTextView = findViewById(R.id.titleTextView1);
-		titleTextView.setText(listFragment.userClicked);
-
-		// Defining user's info
-		currentUserUID = mAuth.getCurrentUser().getUid();
-		clickedUserDisplay = listFragment.userClicked;
-		currentUserDisplay = UserActivity.username;
+		titleTextView.setText(clickedUserDisplay);
 
 		// MISC Definitions
 		messages = new ArrayList<>();                                                                       // Initialize arraylist

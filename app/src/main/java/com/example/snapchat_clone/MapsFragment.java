@@ -7,12 +7,14 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.content.Intent;
 import android.view.ViewGroup;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -22,6 +24,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,7 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class MapsFragment extends Fragment {
+public class MapsFragment extends Fragment implements GoogleMap.OnMarkerClickListener {
 
 	//Google Maps API Objects
 	GoogleMap mGoogleMap;
@@ -60,6 +63,7 @@ public class MapsFragment extends Fragment {
 	LatLng userLocation;
 
 	// Misc
+	boolean doubleBackToExitPressedOnce = false;
 	boolean firstTime; // is true on first open, false elsewise; for initial camera zoom on current user
 
 	public MapsFragment() {
@@ -175,6 +179,7 @@ public class MapsFragment extends Fragment {
 						 */
 						public void onMapReady(GoogleMap googleMap) {
 							mGoogleMap = googleMap;
+							mGoogleMap.setOnMarkerClickListener(MapsFragment.this);
 							mGoogleMap.clear();
 							// Map setting / Map Type
 							googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -185,7 +190,7 @@ public class MapsFragment extends Fragment {
 									// Zooms in on user's location on first open
 									if (firstTime) {
 										userLocation = new LatLng(latitudes.get(i), longitudes.get(i));
-										googleMap.addMarker(new MarkerOptions().position(userLocation).title(("you").toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+										googleMap.addMarker(new MarkerOptions().position(userLocation).title(("you").toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder) + "\n" + "").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 										CameraPosition cameraPosition = new CameraPosition.Builder().target(userLocation).zoom(12).build();
 										googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 										firstTime = false;
@@ -206,6 +211,28 @@ public class MapsFragment extends Fragment {
 			@Override
 			public void onCancelled(@NonNull DatabaseError databaseError) {}
 		});
+	}
+
+	@Override
+	public boolean onMarkerClick(Marker marker) {
+		Log.i("boolean", Boolean.toString(doubleBackToExitPressedOnce));
+		if (doubleBackToExitPressedOnce) {
+			String userClicked = marker.getTitle().toLowerCase();
+			Intent intent = new Intent(getActivity().getApplicationContext(), ChatActivity.class);
+			intent.putExtra("userClicked", userClicked);
+			startActivity(intent);
+
+		} else {
+			this.doubleBackToExitPressedOnce = true;
+			new Handler().postDelayed(new Runnable() {
+				@Override
+				public void run() {
+					doubleBackToExitPressedOnce = false;
+				}
+			}, 2000);
+
+		}
+		return false;
 	}
 
 	@Override
