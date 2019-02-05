@@ -3,6 +3,8 @@ package com.example.snapchat_clone;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -28,6 +30,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
 public class MapsFragment extends Fragment {
 
@@ -35,6 +39,7 @@ public class MapsFragment extends Fragment {
 	GoogleMap mGoogleMap;
 	MapView mapView;
 	View mView;
+	Geocoder geocoder;
 
 	//Firebase Database Objects
 	FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -47,6 +52,7 @@ public class MapsFragment extends Fragment {
 	ArrayList<String> displayNames;
 	ArrayList<Double> latitudes;
 	ArrayList<Double> longitudes;
+	ArrayList<String> cities;
 
 	//Current user's information
 	Double userLat, userLng;
@@ -60,6 +66,29 @@ public class MapsFragment extends Fragment {
 		// Required empty public constructor
 	}
 
+	// Method that uses latitude and longitude to determine city & country of the last known location of the user
+	public String getGeoInfo(double latitude, double longitude, Geocoder geocoder) {
+		String info = "";
+		try {
+			List<Address> addressList = geocoder.getFromLocation(latitude, longitude, 2);
+			if (addressList != null && addressList.size() > 0) {
+				// City
+				if (addressList.get(0).getLocality() != null) {
+					info = addressList.get(0).getLocality() + ", ";
+				}
+				// Country
+				if (addressList.get(0).getCountryName() != null) {
+					info += addressList.get(0).getCountryName();
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return info;
+	}
+
+
+	// METHOD FOR LOCATION SERVICES PERMISSIONS
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
@@ -75,11 +104,13 @@ public class MapsFragment extends Fragment {
 		super.onCreate(savedInstanceState);
 
 		// Defining
+		cities = new ArrayList<>();
 		displayNames = new ArrayList<>();
 		latitudes = new ArrayList<>();
 		longitudes = new ArrayList<>();
 		firstTime = true;
 		userDisplay = UserActivity.username;
+		geocoder = new Geocoder(getActivity(), Locale.getDefault());
 
 		// Value Event Listener to get current user's information
 		// Has its own query
@@ -151,19 +182,21 @@ public class MapsFragment extends Fragment {
 							// For dropping a marker at a point on the Map
 							for (int i = 0; i < latitudes.size(); i++) {
 								if (displayNames.get(i).equals(userDisplay)) {
+									// Zooms in on user's location on first open
 									if (firstTime) {
 										userLocation = new LatLng(latitudes.get(i), longitudes.get(i));
-										googleMap.addMarker(new MarkerOptions().position(userLocation).title(userDisplay).snippet("You are here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+										googleMap.addMarker(new MarkerOptions().position(userLocation).title(("you").toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 										CameraPosition cameraPosition = new CameraPosition.Builder().target(userLocation).zoom(12).build();
 										googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
 										firstTime = false;
 									} else if (!firstTime) {
 										userLocation = new LatLng(latitudes.get(i), longitudes.get(i));
-										googleMap.addMarker(new MarkerOptions().position(userLocation).title(userDisplay).snippet("You are here!").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+										googleMap.addMarker(new MarkerOptions().position(userLocation).title((userDisplay).toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
 									}
+									// Other user's locations
 								} else {
 									LatLng position = new LatLng(latitudes.get(i), longitudes.get(i));
-									googleMap.addMarker(new MarkerOptions().position(position).title(displayNames.get(i)).snippet("Blank minutes ago").icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+									googleMap.addMarker(new MarkerOptions().position(position).title((displayNames.get(i)).toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
 								}
 							}
 						}
