@@ -42,13 +42,14 @@ public class listFragment extends Fragment {
     DatabaseReference mUserRef = mRootRef.child("Users");
     FirebaseAuth mAuth = FirebaseAuth.getInstance();
     ListView usersListView;
-//    ArrayList<String> usersDisplayName;
+    //    ArrayList<String> usersDisplayName;
     static String userClicked;
 
     ArrayList<Map<String, String>> snaps;
     HashMap<String, String> userId;
     ArrayList<String> usernames;
     static String displayName;
+    ArrayList<String> usersDisplayName;
 
     SimpleAdapter arrayAdapter;
 
@@ -58,12 +59,11 @@ public class listFragment extends Fragment {
     }
 
     // TODO: display the image on another activity that just has a imageView
-        // full screen just like the camera
-        // tapping on the image will view the next image -> if there are no more images left to be shown will be brought back to the listView
+    // full screen just like the camera
+    // tapping on the image will view the next image -> if there are no more images left to be shown will be brought back to the listView
     // TODO: set a timer for how long the image is displayed for before they are returned to the listView
-        // make sure to delete it from storage and from the database once the image is finished being viewed
-        // display a timer in the corner on how much they time they have left to view the image
-
+    // make sure to delete it from storage and from the database once the image is finished being viewed
+    // display a timer in the corner on how much they time they have left to view the image
 
 
     @Override
@@ -76,6 +76,7 @@ public class listFragment extends Fragment {
         snaps = new ArrayList<>();
         usernames = new ArrayList<>();
         userId = new HashMap<>();
+        usersDisplayName = new ArrayList<>();
 
         final Query getDisplayName = mUserRef.orderByChild("uid").equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
         getDisplayName.addValueEventListener(new ValueEventListener() {
@@ -99,6 +100,7 @@ public class listFragment extends Fragment {
         final ValueEventListener userID = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                userId.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
                         userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
@@ -114,10 +116,10 @@ public class listFragment extends Fragment {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
                             snaps.clear();
                             for (int i = 0; i < usernames.size(); i++) {
-                                    Map<String, String> userInfo = new HashMap<>();
-                                    userInfo.put("username", userId.get(usernames.get(i)));
-                                    userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
-                                    snaps.add(userInfo);
+                                Map<String, String> userInfo = new HashMap<>();
+                                userInfo.put("username", userId.get(usernames.get(i)));
+                                userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
+                                snaps.add(userInfo);
                             }
                             Log.i("Snaps: ", snaps.toString());
                             arrayAdapter.notifyDataSetChanged();
@@ -138,42 +140,41 @@ public class listFragment extends Fragment {
         };
         mUserRef.addValueEventListener(userID);
 
-        arrayAdapter = new SimpleAdapter(getActivity(),snaps, android.R.layout.simple_list_item_2, new String[] {"username", "numberofSnaps"}, new int[] {android.R.id.text1, android.R.id.text2});
+        arrayAdapter = new SimpleAdapter(getActivity(), snaps, android.R.layout.simple_list_item_2, new String[]{"username", "numberofSnaps"}, new int[]{android.R.id.text1, android.R.id.text2});
         usersListView.setAdapter(arrayAdapter);
 
-//        Query userQuery = mUserRef.orderByKey();
-//        userQuery.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-//                if (dataSnapshot.exists()) {
-//                	snaps.clear();
-//					for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-//
-//					}
-//					Log.i("Snaps: ", snaps.toString());
-////	                ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(getActivity(), android.R.layout.simple_list_item_2, usersDisplayName);
-////	                usersListView.setAdapter(arrayAdapter);
-//                }
-//            }
-//            @Override
-//            public void onCancelled(@NonNull DatabaseError databaseError) {}
-//        });
+        Query userQuery = mUserRef.orderByKey();
+        userQuery.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    usersDisplayName.clear();
+                    for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                        usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
 
         return listView;
     }
 
-//	@Override
-//	public void onStart() {
-//		super.onStart();
-//		usersListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//			@Override
-//			public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-//				Intent intent = new Intent(getContext(), ChatActivity.class);
-////				userClicked = usersDisplayName.get(position);
-//				Log.i("User clicked", userClicked);
-//				startActivity(intent);
-//				return true;
-//			}
-//		});
+    @Override
+    public void onStart() {
+        super.onStart();
+        usersListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                Intent intent = new Intent(getContext(), ChatActivity.class);
+                intent.putExtra("userClicked", usersDisplayName.get(position));
+                startActivity(intent);
+                return true;
+            }
+        });
     }
+}
 
