@@ -37,6 +37,7 @@ public class listFragment extends Fragment {
     ListView usersListView;
     ArrayList<String> usersDisplayName;
     static String userClicked;
+    ArrayAdapter<String> arrayAdapter;
 
     public listFragment() {
         // Required empty public constructor
@@ -63,7 +64,7 @@ public class listFragment extends Fragment {
 							usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
 					}
 					Log.i("Users", usersDisplayName.toString());
-	                ArrayAdapter arrayAdapter = (ArrayAdapter) new ArrayAdapter(getActivity(), android.R.layout.simple_list_item_1, usersDisplayName);
+	                arrayAdapter = new ArrayAdapter<>(getContext(), android.R.layout.simple_list_item_1, usersDisplayName);
 	                usersListView.setAdapter(arrayAdapter);
                 }
             }
