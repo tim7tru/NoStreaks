@@ -101,6 +101,7 @@ public class listFragment extends Fragment {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 userId.clear();
+                usernames.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
                         userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
@@ -115,13 +116,14 @@ public class listFragment extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
                             snaps.clear();
+                            Log.i("Snaps after delete: ", snaps.toString());
                             for (int i = 0; i < usernames.size(); i++) {
                                 Map<String, String> userInfo = new HashMap<>();
                                 userInfo.put("username", userId.get(usernames.get(i)));
                                 userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
                                 snaps.add(userInfo);
                             }
-                            Log.i("Snaps: ", snaps.toString());
+                            Log.i("Snaps after going through the for loop:  ", snaps.toString());
                             arrayAdapter.notifyDataSetChanged();
                         }
                     }
