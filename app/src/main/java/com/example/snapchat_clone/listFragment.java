@@ -6,6 +6,7 @@ import android.provider.ContactsContract;
 import android.renderscript.Sampler;
 import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +18,7 @@ import android.widget.ListView;
 import android.content.Intent;
 import android.widget.SimpleAdapter;
 import android.widget.SimpleCursorAdapter;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -53,18 +55,12 @@ public class listFragment extends Fragment {
 
     SimpleAdapter arrayAdapter;
 
+    TextView logOut;
+
     public listFragment() {
         // Required empty public constructor
 
     }
-
-    // TODO: display the image on another activity that just has a imageView
-    // full screen just like the camera
-    // tapping on the image will view the next image -> if there are no more images left to be shown will be brought back to the listView
-    // TODO: set a timer for how long the image is displayed for before they are returned to the listView
-    // make sure to delete it from storage and from the database once the image is finished being viewed
-    // display a timer in the corner on how much they time they have left to view the image
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -73,6 +69,7 @@ public class listFragment extends Fragment {
         View listView = inflater.inflate(R.layout.fragment_list, container, false);
 
         usersListView = listView.findViewById(R.id.usersListView);
+        logOut = listView.findViewById(R.id.logOut);
         snaps = new ArrayList<>();
         usernames = new ArrayList<>();
         userId = new HashMap<>();
@@ -116,14 +113,12 @@ public class listFragment extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
                             snaps.clear();
-                            Log.i("Snaps after delete: ", snaps.toString());
                             for (int i = 0; i < usernames.size(); i++) {
                                 Map<String, String> userInfo = new HashMap<>();
                                 userInfo.put("username", userId.get(usernames.get(i)));
                                 userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
                                 snaps.add(userInfo);
                             }
-                            Log.i("Snaps after going through the for loop:  ", snaps.toString());
                             arrayAdapter.notifyDataSetChanged();
                         }
                     }
@@ -159,6 +154,17 @@ public class listFragment extends Fragment {
 
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
+            }
+        });
+
+        // to log the user out of their account
+        logOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("Logout", "attempting to log out");
+                FirebaseAuth.getInstance().signOut();
+                Intent intent = new Intent(getActivity(), MainActivity.class);
+                startActivity(intent);
             }
         });
 
