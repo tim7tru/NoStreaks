@@ -8,7 +8,7 @@
     tools:context=".MainActivity">
 
     <ImageView
-        android:id="@+id/imageView"
+        android:id="@+id/snapView"
         android:layout_width="95dp"
         android:layout_height="71dp"
         android:layout_marginTop="176dp"

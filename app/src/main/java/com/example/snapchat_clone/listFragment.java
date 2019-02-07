@@ -45,8 +45,8 @@ public class listFragment extends Fragment {
     static String displayName;
     ArrayList<String> usersDisplayName;
 
-    // HashMap for username and photo download url
-    ArrayList<Map<String, String>> photoUrls;
+    // ArrayList for photo download url
+    HashMap<String, String> photoUrls;
 
     SimpleAdapter arrayAdapter;
 
@@ -69,7 +69,7 @@ public class listFragment extends Fragment {
         usernames = new ArrayList<>();
         userId = new HashMap<>();
         usersDisplayName = new ArrayList<>();
-        photoUrls = new ArrayList<>();
+        photoUrls = new HashMap<>();
 
         final Query getDisplayName = mUserRef.orderByChild("uid").equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
         getDisplayName.addValueEventListener(new ValueEventListener() {
@@ -114,19 +114,10 @@ public class listFragment extends Fragment {
                                 userInfo.put("username", userId.get(usernames.get(i)));
                                 userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
                                 snaps.add(userInfo);
-                                // grabbing the photo download urls by their unique id
-                                for (DataSnapshot snapshot : ds.child("receivedPhotos").child(usernames.get(i)).getChildren()) {
-//                                    Log.i("PHOTO KEY: ", snapshot.getKey());
-                                    String key = snapshot.getKey();
-//                                    Log.i("PHOTO URL: ", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).child(key).getValue()));
-                                    Map<String, String> photoInfo = new HashMap<>();
-                                    photoInfo.put(usernames.get(i), String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).child(key).getValue()));
-                                    photoUrls.add(photoInfo);
-                                }
-                            }
+                        }
                             arrayAdapter.notifyDataSetChanged();
                         }
-                        Log.i("PHOTO HASHMAP: ", photoUrls.toString());
+
                     }
 
                     @Override
@@ -187,6 +178,43 @@ public class listFragment extends Fragment {
                 intent.putExtra("userClicked", usersDisplayName.get(position));
                 startActivity(intent);
                 return true;
+            }
+        });
+
+        usersListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
+
+                // query into the database for image sent from the user that was clicked
+                final Query photoInfo = mUserRef.child(displayName);
+                photoInfo.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        photoUrls.clear();
+                        for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(usernames.get(position)).getChildren()) {
+                            // get the unique key for each of the photos
+                            String key = ds.getKey();
+                            // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
+
+                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(usernames.get(position)).child(key).getValue()));
+                        }
+
+                        Log.i("PHOTO URLS: ", photoUrls.toString());
+
+                        // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
+                        Bundle bundle = new Bundle();
+                        bundle.putSerializable("photoUrls", photoUrls);
+                        Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
+                        intent.putExtra("bundle", bundle);
+                        intent.putExtra("clickedUser", usernames.get(position));
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                    }
+                });
             }
         });
     }
