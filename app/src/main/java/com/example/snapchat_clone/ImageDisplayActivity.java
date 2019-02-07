@@ -77,8 +77,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
             photoUrls = (HashMap<String, String>) bundle.getSerializable("photoUrls");
         }
         clickedUser = intent.getStringExtra("clickedUser");
-        Log.i("IMAGE ACTIVITY:", String.valueOf(photoUrls));
-        Log.i("CLICKED USER: ", clickedUser);
 
         // to load the images in the background
         for (Map.Entry<String, String> entry : photoUrls.entrySet()) {
@@ -87,11 +85,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
             uniqueId.add(entry.getKey());
             imageUrls.add(entry.getValue());
         }
-
-        Log.i("UNIQUE ID: ", uniqueId.toString());
-        Log.i("IMAGE URLS: ", imageUrls.toString());
-
-
 
         // load the first snap into snapView(ImageView)
         Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
@@ -105,20 +98,12 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 if (i < imageUrls.size()) {
                     Log.i("LOADING IMAGE: ", imageUrls.get(i));
                     Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-                    Query deletePhoto = mUser.child(displayName);
-                    deletePhoto.addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            deleteSnap(i-1);
-                        }
+                    // to delete the image from the database after viewing it
+                    deleteSnap(i-1);
 
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
-
+                    // if there are no more photos left to view to go bakc to the listFragment
                 } else if (i >= imageUrls.size()) {
+                    // to delete te image from the database after viewing it
                     deleteSnap(i-1);
                     Intent back = new Intent(getApplicationContext(), UserActivity.class);
                     startActivity(back);
@@ -128,6 +113,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
     }
 
+    // to delete the image from the database
     public void deleteSnap(final Integer position) {
         Query deletePhoto = mUser.child(displayName);
         deletePhoto.addListenerForSingleValueEvent(new ValueEventListener() {
