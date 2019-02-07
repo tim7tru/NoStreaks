@@ -40,7 +40,7 @@ public class listFragment extends Fragment {
     //    ArrayList<String> usersDisplayName;
     static String userClicked;
 
-    ArrayList<Map<String, String>> snaps;
+    ArrayList<UserListItem> snaps;
     HashMap<String, String> userId;
     ArrayList<String> usernames;
     static String displayName;
@@ -50,6 +50,7 @@ public class listFragment extends Fragment {
     HashMap<String, String> photoUrls;
 
     SimpleAdapter arrayAdapter;
+    UserAdapter userAdapter;
 
     TextView logOut;
 
@@ -111,12 +112,25 @@ public class listFragment extends Fragment {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
                             snaps.clear();
                             for (int i = 0; i < usernames.size(); i++) {
-                                Map<String, String> userInfo = new HashMap<>();
-                                userInfo.put("username", userId.get(usernames.get(i)));
-                                userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps " + String.valueOf(ds.child("receivedMessages").child(usernames.get(i)).getChildrenCount()) + " messages");
-                                snaps.add(userInfo);
+                            	int ghost;
+                            	String username = userId.get(usernames.get(i));
+	                            String snapCount = String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount());
+	                            String messageCount = String.valueOf(ds.child("receivedMessages").child(usernames.get(i)).getChildrenCount());
+	                            if (Integer.parseInt(snapCount) == 0 && Integer.parseInt(messageCount) == 0) {
+	                            	ghost = R.drawable.ghost_no;
+	                            } else {
+	                            	ghost = R.drawable.ghost_yes;
+	                            }
+	                            snaps.add(new UserListItem(ghost, username, snapCount, messageCount));
+
+//                                Map<String, String> userInfo = new HashMap<>();
+//                                userInfo.put("username", userId.get(usernames.get(i)));
+//                                userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps " + String.valueOf(ds.child("receivedMessages").child(usernames.get(i)).getChildrenCount()) + " messages");
+//                                snaps.add(userInfo);
+
+
                         }
-                            arrayAdapter.notifyDataSetChanged();
+                            userAdapter.notifyDataSetChanged();
                         }
 
                     }
@@ -135,8 +149,9 @@ public class listFragment extends Fragment {
         };
         mUserRef.addValueEventListener(userID);
 
-        arrayAdapter = new SimpleAdapter(getActivity(), snaps, android.R.layout.simple_list_item_2, new String[]{"username", "numberofSnaps"}, new int[]{android.R.id.text1, android.R.id.text2});
-        usersListView.setAdapter(arrayAdapter);
+
+        userAdapter = new UserAdapter(getActivity(), snaps);
+        usersListView.setAdapter(userAdapter);
 
         Query userQuery = mUserRef.orderByKey();
         userQuery.addValueEventListener(new ValueEventListener() {

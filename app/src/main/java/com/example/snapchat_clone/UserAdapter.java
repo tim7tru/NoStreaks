@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,14 +20,15 @@ public class UserAdapter extends ArrayAdapter<UserListItem> {
 	private Context userContext;
 	private List<UserListItem> userListItems = new ArrayList<>();
 
-	public UserAdapter(@NonNull Context context, @LayoutRes ArrayList<UserListItem> list) {
+	public UserAdapter(@NonNull Context context, ArrayList<UserListItem> list) {
 		super(context, 0, list);
+		userContext = context;
 		userListItems = list;
 	}
 
 	@NonNull
 	@Override
-	public View getView(int position, @NonNull View convertView, @NonNull ViewGroup parent) {
+	public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
 		View listItem = convertView;
 		if (listItem == null) {
 			listItem = LayoutInflater.from(userContext).inflate(R.layout.user_list_view_item_yes, parent,false);
