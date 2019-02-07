@@ -49,6 +49,7 @@ public class listFragment extends Fragment {
     HashMap<String, String> photoUrls;
 
     SimpleAdapter arrayAdapter;
+    UserAdapter userAdapter;
 
     TextView logOut;
 
@@ -113,6 +114,7 @@ public class listFragment extends Fragment {
                                 Map<String, String> userInfo = new HashMap<>();
                                 userInfo.put("username", userId.get(usernames.get(i)));
                                 userInfo.put("numberofSnaps", String.valueOf(ds.child("receivedPhotos").child(usernames.get(i)).getChildrenCount()) + " snaps");
+
                                 snaps.add(userInfo);
                         }
                             arrayAdapter.notifyDataSetChanged();
