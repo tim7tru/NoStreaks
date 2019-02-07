@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">snapchat-clone</string>
+    <string name="app_name">Snapchat-NoStreaks</string>
     <string name="log_in">LOG IN</string>
     <string name="sign_up">SIGN UP</string>
     <string name="email">EMAIL</string>
