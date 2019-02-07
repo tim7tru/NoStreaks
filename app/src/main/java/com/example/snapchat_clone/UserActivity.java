@@ -55,7 +55,7 @@ public class UserActivity extends AppCompatActivity {
 
         ViewPager viewPager = findViewById(R.id.viewPager);
         viewPager.setAdapter(new pageAdapter(getSupportFragmentManager()));
-	    uniqueID = mAuth.getCurrentUser().getUid();
+	    uniqueID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 	    Log.i("unique id", uniqueID);
 	    locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
 	    Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(uniqueID);
@@ -82,7 +82,7 @@ public class UserActivity extends AppCompatActivity {
             public void onLocationChanged(Location location) {
                 final double latitude = location.getLatitude();
                 final double longitude = location.getLongitude();
-				uniqueID = mAuth.getCurrentUser().getUid();
+				uniqueID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 				Log.i("unique id", uniqueID);
 
 				Query uniqueIdQuery = mUserRef.orderByChild("uid").equalTo(uniqueID);
@@ -93,7 +93,7 @@ public class UserActivity extends AppCompatActivity {
 							username = "";
 							for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 								username = (String) snapshot.child("displayName").getValue();
-								Log.i("Username in UserActivity", username + "");
+//								Log.i("Username in UserActivity", username + "");
 							}
 							mUserRef.child(username).child("longitude").setValue(longitude);
 							mUserRef.child(username).child("latitude").setValue(latitude);
@@ -121,6 +121,7 @@ public class UserActivity extends AppCompatActivity {
 	    } else {
 		    UserActivity.locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 1000, UserActivity.locationListener);
 	    }
+
     }
 
 	/*

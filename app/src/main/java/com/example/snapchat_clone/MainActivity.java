@@ -1,6 +1,7 @@
 package com.example.snapchat_clone;
 
 import android.content.Intent;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +14,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class MainActivity extends AppCompatActivity {
 
     private FirebaseAuth mAuth;
+    FirebaseAuth.AuthStateListener mAuthListener;
 
     public void onClick (View view) {
         Button buttonPressed = (Button) view;
@@ -30,6 +32,19 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        mAuthListener = new FirebaseAuth.AuthStateListener() {
+
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                // to check if there is a user currently signed in -> will go straight to useractivity
+                FirebaseUser currentuser = firebaseAuth.getCurrentUser();
+                if (currentuser != null) {
+                    Intent intent = new Intent(getApplicationContext(), UserActivity.class);
+                    startActivity(intent);
+                    Log.i("User", "there is currently a user logged in");
+                }
+            }
+        };
     }
 
     /*
@@ -58,10 +73,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
-        if (currentUser != null) {
-            mAuth.signOut();
-        }
+        // Check if user is signed in (non-null) and if there a user already signed in to go straight to the useractivity page
+        mAuth.addAuthStateListener(mAuthListener);
+
     }
 }

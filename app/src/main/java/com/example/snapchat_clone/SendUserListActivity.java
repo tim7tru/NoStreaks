@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -27,6 +28,7 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
@@ -35,6 +37,9 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class SendUserListActivity extends AppCompatActivity {
 
@@ -45,6 +50,10 @@ public class SendUserListActivity extends AppCompatActivity {
     // list
     ArrayList<String> userNames = new ArrayList<>();
     ArrayList<String> sendTo = new ArrayList<>();
+
+    // variables
+    long count = 0;
+    String displayName = "";
 
     // array adapter
     ArrayAdapter<String> arrayAdapter;
@@ -92,6 +101,26 @@ public class SendUserListActivity extends AppCompatActivity {
         };
         mUser.addListenerForSingleValueEvent(eventListener);
 
+        displayName = UserActivity.username;
+
+        // to find the image count for the current user
+        final DatabaseReference mCount = mUser.child(displayName);
+        final ValueEventListener eventListener1 = new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
+                    count = (long) dataSnapshot.child("count").getValue();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        };
+
+        mCount.addValueEventListener(eventListener1);
+
         // to select which users are selected to send the image too
         userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -119,9 +148,9 @@ public class SendUserListActivity extends AppCompatActivity {
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                // TODO: need to add a counter for the number of images so when adding images to firebase storage they all have a different file name
+
                 final StorageReference myRef = storageReference
-                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo"); // specifying which user file the image is going to be stored in
+                        .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count)); // specifying which user file the image is going to be stored in
 
                 // grabbing the bytearray from the intent
                 Intent intent = getIntent();
@@ -167,17 +196,23 @@ public class SendUserListActivity extends AppCompatActivity {
                             // add the image URL into the firebase database
                             Log.i("add photo to database: ", "starting to add photo to database");
 
-                            // TODO: for loop to go through sendTo arraylist -> to be able to sent the picture to more than one person
-                            DatabaseReference mPhotos = mUser.child(sendTo.get(0)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
-                            String photoKey = mPhotos.push().getKey();
-                            mPhotos.child(photoKey).setValue(firebaseUrl.toString());
-                            Toast.makeText(SendUserListActivity.this, "finished uploading photos!", Toast.LENGTH_SHORT).show();
+                            // updating the count in the database for the current user
+                            count = count + 1;
+                            Map<String, Object> updateCount = new HashMap<>();
+                            updateCount.put("count", count);
+                            mCount.updateChildren(updateCount);
 
+                            // putting the image URL into the database for the users the image was sent to
+                            for (int i = 0; i < sendTo.size(); i++) {
+                                DatabaseReference mPhotos = mUser.child(sendTo.get(i)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
+                                String photoKey = mPhotos.push().getKey();
+                                mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                            }
+                            Toast.makeText(SendUserListActivity.this, "Sent photos!", Toast.LENGTH_SHORT).show();
 
-                            // TODO: returns to the userlist after finishing sending the photo
                             // return to the list view on finishing sending photo
-//                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
-//                            startActivity(goBack);
+                            Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
+                            startActivity(goBack);
                         }
                     }
                 });
