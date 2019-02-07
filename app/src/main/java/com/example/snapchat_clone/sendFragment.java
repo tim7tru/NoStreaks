@@ -2,6 +2,7 @@ package com.example.snapchat_clone;
 
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -14,11 +15,13 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -50,9 +53,13 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     // camera variables
     Camera.PictureCallback jpegCallback;
     final int CAMERA_REQUEST_CODE = 1;
+    int cameraID = Camera.CameraInfo.CAMERA_FACING_BACK;
 
     // firebase storage
     StorageReference storageReference;
+
+    //camera switch
+    ImageView cameraSwitch;
 
 
 
@@ -72,6 +79,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         imageView = sendView.findViewById(R.id.snapView);
         deleteImage = sendView.findViewById(R.id.deleteImage);
         sendButton = sendView.findViewById(R.id.sendButton);
+        cameraSwitch = sendView.findViewById(R.id.camerSwitch);
 
         // Firebase Storage Reference
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -154,6 +162,61 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
 
+        // click listener to change the camera from front/back
+        cameraSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // get the current camera ID
+                camera.stopPreview();
+
+                // need to release camera first or app will crash
+                camera.release();
+
+                // swap the id of the camera to be used
+                if (cameraID == Camera.CameraInfo.CAMERA_FACING_BACK) {
+                    cameraID = Camera.CameraInfo.CAMERA_FACING_FRONT;
+                } else {
+                    cameraID = Camera.CameraInfo.CAMERA_FACING_BACK;
+                }
+
+                camera = Camera.open(cameraID);
+
+                Camera.Parameters parameters = camera.getParameters();
+
+                // set the orientation of the camera
+
+                //refresh rate
+                parameters.setPreviewFrameRate(30);
+
+                // focus
+                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+
+                // To find the best image size for your camera
+                Camera.Size bestSize = null;
+                List<Camera.Size> sizeList = camera.getParameters().getSupportedPreviewSizes();
+                bestSize = sizeList.get(0);
+
+                for (int i = 1; i < sizeList.size(); i++) {
+                    if (sizeList.get(i).width * sizeList.get(i).height > bestSize.width * bestSize.height) {
+                        bestSize = sizeList.get(i);
+                    }
+                }
+
+                parameters.setPreviewSize(bestSize.width, bestSize.height);
+                camera.setParameters(parameters);
+                setCameraDisplayOrientation(getActivity(), cameraID, camera);
+
+                // setting the preview display
+                try {
+                    camera.setPreviewDisplay(surfaceHolder);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                camera.startPreview();
+
+            }
+        });
+
         return sendView;
     }
 
@@ -169,10 +232,10 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             os.close();
         } catch (Exception e) {
             e.printStackTrace();
-        }
+}
 
         return imageFile.getAbsolutePath();
-    }
+                }
 
     private Bitmap rotate(Bitmap bitmap) {
         // to get width and height of bitmap
@@ -181,6 +244,16 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
         Matrix matrix = new Matrix();
         matrix.setRotate(90);
+
+        // setting the preview for the front camera
+        if (cameraID == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            Matrix frontMatrix = new Matrix();
+            // preventing the mirror effect
+            frontMatrix.preScale(-1.0f, 1.0f);
+            // rotating the bitmap
+            frontMatrix.postRotate(90);
+            return Bitmap.createBitmap(bitmap, 0,0,width,height,frontMatrix,true);
+        }
 
         return Bitmap.createBitmap(bitmap,0,0,width,height,matrix,true);
     }
@@ -193,11 +266,10 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // To open the camera
-        camera = Camera.open();
+        camera = Camera.open(cameraID);
         Camera.Parameters parameters = camera.getParameters();
 
         // set the orientation of the camera
-        camera.setDisplayOrientation(90);
 
         //refresh rate
         parameters.setPreviewFrameRate(30);
@@ -219,6 +291,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         parameters.setPreviewSize(bestSize.width, bestSize.height);
         camera.setParameters(parameters);
 
+        setCameraDisplayOrientation(getActivity(), cameraID, camera);
+
         // setting the preview display
         try {
             camera.setPreviewDisplay(holder);
@@ -227,6 +301,32 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         }
         camera.startPreview();
 
+    }
+
+
+    public static void setCameraDisplayOrientation(Activity activity,
+                                                   int cameraId, android.hardware.Camera camera) {
+        android.hardware.Camera.CameraInfo info =
+                new android.hardware.Camera.CameraInfo();
+        android.hardware.Camera.getCameraInfo(cameraId, info);
+        int rotation = activity.getWindowManager().getDefaultDisplay()
+                .getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0: degrees = 0; break;
+            case Surface.ROTATION_90: degrees = 90; break;
+            case Surface.ROTATION_180: degrees = 180; break;
+            case Surface.ROTATION_270: degrees = 270; break;
+        }
+
+        int result;
+        if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+            result = (info.orientation + degrees) % 360;
+            result = (360 - result) % 360;  // compensate the mirror
+        } else {  // back-facing
+            result = (info.orientation - degrees + 360) % 360;
+        }
+        camera.setDisplayOrientation(result);
     }
 
     @Override
