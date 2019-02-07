@@ -75,7 +75,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 	public void onClick(View v) {
 
 		// hides keyboard if the listview is clicked
-		if (v.getId() == messageListView.getId() || v.getId() == titleTextView.getId() || v.getId() == constraint.getId()) {
+		if (v.getId() == titleTextView.getId() || v.getId() == constraint.getId()) {
 			InputMethodManager inputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
 			inputMethodManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
 		}
@@ -154,7 +154,6 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 		titleTextView = findViewById(R.id.titleTextView1);
 		titleTextView.setText(clickedUserDisplay);
 		titleTextView.setOnClickListener(this);
-		messageListView.setOnClickListener(this);
 		constraint = findViewById(R.id.layout);
 
 		// MISC Definitions
