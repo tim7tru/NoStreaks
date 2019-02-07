@@ -201,9 +201,32 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMarkerClickLis
 									// Other user's locations
 								} else {
 									LatLng position = new LatLng(latitudes.get(i), longitudes.get(i));
-									googleMap.addMarker(new MarkerOptions().position(position).title((displayNames.get(i)).toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)));
+									googleMap.addMarker(new MarkerOptions().position(position).title((displayNames.get(i)).toUpperCase()).snippet(getGeoInfo(latitudes.get(i), longitudes.get(i), geocoder)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW)).draggable(true));
 								}
 							}
+
+							// UPDATED: February 7, 2019 by Nicole
+							// added drag listener on google maps for markers
+							mGoogleMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+								@Override
+								public void onMarkerDragStart(Marker marker) {
+									marker.setDraggable(false);
+									String userClicked = marker.getTitle().toLowerCase();
+									Intent intent = new Intent(getActivity().getApplicationContext(), ChatActivity.class);
+									intent.putExtra("userClicked", userClicked);
+									startActivity(intent);
+								}
+
+								@Override
+								public void onMarkerDrag(Marker marker) {
+
+								}
+
+								@Override
+								public void onMarkerDragEnd(Marker marker) {
+									marker.setDraggable(true);
+								}
+							});
 						}
 					});
 				}
@@ -213,25 +236,28 @@ public class MapsFragment extends Fragment implements GoogleMap.OnMarkerClickLis
 		});
 	}
 
+
+	// UPDATED: February 7, 2019 by Nicole
+	// Now long click the markers to go to chat instead of double clicking
+
 	@Override
 	public boolean onMarkerClick(Marker marker) {
-		Log.i("boolean", Boolean.toString(doubleBackToExitPressedOnce));
-		if (doubleBackToExitPressedOnce) {
-			String userClicked = marker.getTitle().toLowerCase();
-			Intent intent = new Intent(getActivity().getApplicationContext(), ChatActivity.class);
-			intent.putExtra("userClicked", userClicked);
-			startActivity(intent);
-
-		} else {
-			this.doubleBackToExitPressedOnce = true;
-			new Handler().postDelayed(new Runnable() {
-				@Override
-				public void run() {
-					doubleBackToExitPressedOnce = false;
-				}
-			}, 2000);
-
-		}
+//		Log.i("boolean", Boolean.toString(doubleBackToExitPressedOnce));
+//		if (doubleBackToExitPressedOnce) {
+//				String userClicked = marker.getTitle().toLowerCase();
+//	Intent intent = new Intent(getActivity().getApplicationContext(), ChatActivity.class);
+//			intent.putExtra("userClicked", userClicked);
+//	startActivity(intent);
+//		} else {
+//			this.doubleBackToExitPressedOnce = true;
+//			new Handler().postDelayed(new Runnable() {
+//				@Override
+//				public void run() {
+//					doubleBackToExitPressedOnce = false;
+//				}
+//			}, 2000);
+//
+//		}
 		return false;
 	}
 
