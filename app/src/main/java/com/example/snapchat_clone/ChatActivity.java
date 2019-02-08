@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -13,7 +12,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.content.Intent;
@@ -26,8 +24,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 public class ChatActivity extends AppCompatActivity implements View.OnClickListener, View.OnKeyListener {
 
@@ -47,7 +43,8 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 	// MISC Declarations
 	String message, uniqueKey,currentUserUID, clickedUserDisplay, currentUserDisplay, clickedUserUID;   // USERS INFO & MESSAGE
 	ArrayList<String> messages, usernames;                                                              // Messages and usernames for the listView
-	SimpleAdapter adapter;                                                                              // SimpleAdapter for the listView
+	ArrayList<ChatListItem> chat;
+	ChatAdapter chatAdapter;
 	boolean closing, firstTime;                                                                         // Switches only if the user presses back
 
 	// When the "SEND" button is pressed, takes editText and sends it to the database
@@ -83,8 +80,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 		switch (v.getId()) {
 			case R.id.backImageView:
 				closing = true;
-				messages.clear();
-				usernames.clear();
+				chat.clear();
 
 				// Deletes ClickedOn Sent (Users/clickedUser/sentMessages/currentUID/messages)
 				Query deleteSenderQuery = mRootRef.child("Users").orderByChild("displayName").equalTo(clickedUserDisplay);
@@ -159,6 +155,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 		// MISC Definitions
 		messages = new ArrayList<>();                               // Initialize arraylist
 		usernames = new ArrayList<>();                              // Initialize arraylist
+		chat = new ArrayList<>();
 		closing = false;                                            // Default the close to false
 		firstTime = true;                                           // Default to true everytime the activity is opened
 
@@ -186,8 +183,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 					@Override
 					public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 						if (!firstTime) {
-							messages.add(dataSnapshot.getValue(String.class));
-							usernames.add(clickedUserDisplay);
+							chat.add(new ChatListItem(clickedUserDisplay, dataSnapshot.getValue(String.class), false));
 							// Update() - Line: 269
 							update();
 						}
@@ -208,8 +204,8 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 					@Override
 					public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 						if (!firstTime) {
-							messages.add(dataSnapshot.getValue(String.class));
-							usernames.add(currentUserDisplay);
+							chat.add(new ChatListItem(currentUserDisplay, dataSnapshot.getValue(String.class), true));
+
 							// Update() - Line: 269
 							update();
 						}
@@ -240,8 +236,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 	// Also displays the last sent messages to the clicked user if the clicked user is still viewing the message - for context
 	public void updateListInitial() {
 		// Clears the arraylists
-		messages.clear();
-		usernames.clear();
+		chat.clear();
 		// QUERY TO GET ALL INITIAL CLICKED PAST MESSAGES
 		Query messagesQuery = mRootRef.child("Users").orderByChild("displayName").equalTo(currentUserDisplay);
 		messagesQuery.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -251,8 +246,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 					// ALL RECEIVED MESSAGES FIRST (Users/clickedUser/sentMessages/currentUID/messages)
 					for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 						for (DataSnapshot children : snapshot.child("receivedMessages").child(clickedUserUID).getChildren()) {
-							messages.add(children.getValue(String.class));
-							usernames.add(clickedUserDisplay);
+							chat.add(new ChatListItem(clickedUserDisplay, children.getValue(String.class), false));
 						}
 					}
 					// Update() - Line: 269
@@ -266,26 +260,9 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 	// Puts together the map to be displayed in the simpleAdapter
 	// Arranges the adapter and sets it to the listview
 	public void update() {
-
-		// Keys
-		String[] messageInfo = new String[]{"message", "username"};
-		int[] messageListInfo = new int[]{R.id.message, R.id.username};
-
-		// List of Maps to store the messages
-		List<HashMap<String, String>> fillMaps = new ArrayList<>();
-
-		// Filling the map
-		for (int i = 0; i < messages.size(); i++) {
-			HashMap<String, String> map = new HashMap<>();
-			map.put("message", messages.get(i));
-			map.put("username", usernames.get(i));
-			Log.i("map", map.toString());
-			fillMaps.add(map);
-		}
-
 		// Setting the adapters
-		adapter = new SimpleAdapter(ChatActivity.this, fillMaps, R.layout.message_list_view_item, messageInfo, messageListInfo);
-		messageListView.setAdapter(adapter);
+		chatAdapter = new ChatAdapter(ChatActivity.this, chat);
+		messageListView.setAdapter(chatAdapter);
 	}
 
 	/*
