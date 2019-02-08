@@ -25,7 +25,7 @@
         android:layout_marginBottom="4dp"
         android:background="@drawable/rounded_corner"
         android:fontFamily="@font/roboto_medium"
-        android:padding="10dp"
+        android:padding="6dp"
         android:text="EXAMPLE MESSAGE" />
 
 </RelativeLayout>
