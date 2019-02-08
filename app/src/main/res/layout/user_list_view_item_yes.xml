@@ -1,79 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="#ffffff">
+    android:layout_height="match_parent">
 
     <ImageView
         android:id="@+id/ghostImageView"
-        android:layout_width="77dp"
-        android:layout_height="79dp"
+        android:layout_width="46dp"
+        android:layout_height="44dp"
+        android:layout_alignParentStart="true"
         android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        app:layout_constraintEnd_toStartOf="@+id/usernameTextView"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ghost_yes" />
 
     <TextView
         android:id="@+id/usernameTextView"
-        android:layout_width="341dp"
-        android:layout_height="108dp"
+        android:layout_width="202dp"
+        android:layout_height="49dp"
+        android:layout_alignStart="@+id/ghostImageView"
+        android:layout_alignTop="@+id/ghostImageView"
+        android:layout_marginStart="55dp"
+        android:layout_marginTop="-4dp"
         android:fontFamily="@font/roboto_medium"
         android:gravity="left|center_vertical"
         android:text="NAME"
-        android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textSize="24sp" />
 
     <ImageView
         android:id="@+id/imageView2"
-        android:layout_width="41dp"
-        android:layout_height="33dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@+id/imageView3"
-        app:layout_constraintStart_toEndOf="@+id/usernameTextView"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="23dp"
+        android:layout_height="25dp"
+        android:layout_toStartOf="@id/snapsCountTextView"
+        android:layout_alignTop="@+id/usernameTextView"
         app:srcCompat="@drawable/camera" />
 
     <ImageView
         android:id="@+id/imageView3"
-        android:layout_width="40dp"
-        android:layout_height="28dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="15dp"
-        app:layout_constraintEnd_toStartOf="@+id/messagesCountTextView"
-        app:layout_constraintStart_toEndOf="@+id/usernameTextView"
-        app:layout_constraintTop_toBottomOf="@+id/imageView2"
+        android:layout_width="24dp"
+        android:layout_height="23dp"
+        android:layout_marginBottom="-4dp"
+        android:layout_alignBottom="@+id/usernameTextView"
+        android:layout_toStartOf="@id/messagesCountTextView"
         app:srcCompat="@drawable/message" />
 
     <TextView
         android:id="@+id/snapsCountTextView"
-        android:layout_width="33dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="16dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/imageView2"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="0dp"
+        android:layout_marginEnd="16dp"
         android:fontFamily="@font/roboto_medium"
         android:gravity="center"
         android:text="0"
-        android:textSize="24sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/imageView2"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:textSize="20sp" />
 
     <TextView
         android:id="@+id/messagesCountTextView"
-        android:layout_width="33dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="60dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@+id/imageView3"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
         android:fontFamily="@font/roboto_medium"
         android:gravity="center"
         android:text="0"
-        android:textSize="24sp"
-        app:layout_constraintStart_toStartOf="@+id/snapsCountTextView"
-        app:layout_constraintTop_toTopOf="parent" />
-</android.support.constraint.ConstraintLayout>
+        android:textSize="20sp" />
+
+</RelativeLayout>
