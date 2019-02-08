@@ -145,6 +145,7 @@ public class SendUserListActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.i("Upload Photo: ", "attempting to upload photo");
+                Toast.makeText(SendUserListActivity.this, "Attempting to send photo...", Toast.LENGTH_SHORT).show();
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -215,6 +216,7 @@ public class SendUserListActivity extends AppCompatActivity {
                             startActivity(goBack);
                         }
                     }
+
                 });
             }
         });

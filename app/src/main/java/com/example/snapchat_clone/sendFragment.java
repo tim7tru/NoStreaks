@@ -79,7 +79,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         imageView = sendView.findViewById(R.id.snapView);
         deleteImage = sendView.findViewById(R.id.deleteImage);
         sendButton = sendView.findViewById(R.id.sendButton);
-        cameraSwitch = sendView.findViewById(R.id.camerSwitch);
+        cameraSwitch = sendView.findViewById(R.id.cameraSwitch);
 
         // Firebase Storage Reference
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -99,6 +99,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                     imageView.setVisibility(View.VISIBLE);
                     deleteImage.setVisibility(View.VISIBLE);
                     sendButton.setVisibility(View.VISIBLE);
+                    cameraSwitch.setVisibility(View.INVISIBLE);
 
                     // Rotate the Image
                     final Bitmap rotatedBitmap = rotate(bitmap);
@@ -139,6 +140,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                 deleteImage.setVisibility(View.INVISIBLE);
                 surfaceView.setVisibility(View.VISIBLE);
                 captureButton.setVisibility(View.VISIBLE);
+                cameraSwitch.setVisibility(View.VISIBLE);
             }
         });
 

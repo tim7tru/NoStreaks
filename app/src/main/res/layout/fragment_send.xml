@@ -61,9 +61,9 @@
         app:srcCompat="@drawable/send" />
 
     <ImageView
-        android:id="@+id/camerSwitch"
-        android:layout_width="67dp"
-        android:layout_height="49dp"
+        android:id="@+id/cameraSwitch"
+        android:layout_width="60dp"
+        android:layout_height="53dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
