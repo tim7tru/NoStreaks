@@ -74,6 +74,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         final View sendView = inflater.inflate(R.layout.fragment_send, container, false);
         getActivity().getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
+        // initializing widgets
         surfaceView = sendView.findViewById(R.id.surfaceView);
         captureButton = sendView.findViewById(R.id.captureButton);
         imageView = sendView.findViewById(R.id.snapView);
@@ -84,6 +85,9 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         // Firebase Storage Reference
         storageReference = FirebaseStorage.getInstance().getReference();
 
+        /*
+        Function that runs when a picture is taken
+         */
         jpegCallback = new Camera.PictureCallback(){
 
             @Override
@@ -107,7 +111,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                     // Set the image to the imageView
                     imageView.setImageBitmap(rotatedBitmap);
 
-                    // To send the image to a user -> saves the images in firebase storage
+                    // To send the image to a user when the send button is tapped -> saves the images in firebase storage
                     sendButton.setOnClickListener(new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
@@ -117,6 +121,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                             // creating a temporary file image to save memory -> bytearray is too large to be passed into the intent
                             String filePath = tempFileImage (getActivity(), rotatedBitmap, "photo");
 
+                            // intent to the SendUserListActivity to choose who to send the image to
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
                             intent.putExtra("data", filePath);
                             startActivity(intent);
@@ -164,7 +169,9 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         }
 
-        // click listener to change the camera from front/back
+        /*
+        Click listener to change the camera from back/front
+         */
         cameraSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -185,8 +192,6 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
                 Camera.Parameters parameters = camera.getParameters();
 
-                // set the orientation of the camera
-
                 //refresh rate
                 parameters.setPreviewFrameRate(30);
 
@@ -206,6 +211,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
                 parameters.setPreviewSize(bestSize.width, bestSize.height);
                 camera.setParameters(parameters);
+
+                // set the display orientation
                 setCameraDisplayOrientation(getActivity(), cameraID, camera);
 
                 // setting the preview display
@@ -222,6 +229,11 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         return sendView;
     }
 
+    /*
+    Creating a temporary file to store the byte array of image taken
+    - this temporary file is what is sent in the intent to the SendUserListActivity
+    - this is done because byte array is too large to be sent as an intent
+     */
     private String tempFileImage(FragmentActivity activity, Bitmap rotatedBitmap, String photo) {
         File outputDirectory = activity.getCacheDir();
         File imageFile = new File(outputDirectory, photo + ".jpg");
@@ -239,15 +251,19 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         return imageFile.getAbsolutePath();
                 }
 
+    /*
+    Function to rotate the bitmap to the proper orientation depending on if the image was taken from the front or back camera
+     */
     private Bitmap rotate(Bitmap bitmap) {
         // to get width and height of bitmap
         int width = bitmap.getWidth();
         int height = bitmap.getHeight();
 
+        // setting the rotation if image was taken from the back camera
         Matrix matrix = new Matrix();
         matrix.setRotate(90);
 
-        // setting the preview for the front camera
+        // setting the rotation for the front camera
         if (cameraID == Camera.CameraInfo.CAMERA_FACING_FRONT) {
             Matrix frontMatrix = new Matrix();
             // preventing the mirror effect
@@ -257,14 +273,21 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             return Bitmap.createBitmap(bitmap, 0,0,width,height,frontMatrix,true);
         }
 
+        // returns bitmap of image taken from back camera
         return Bitmap.createBitmap(bitmap,0,0,width,height,matrix,true);
     }
 
+    /*
+    Function that takes the picture and saves it as a jpeg
+     */
     private void captureImage() {
         // to take the picture
         camera.takePicture(null,null,jpegCallback);
     }
 
+    /*
+    Setting up the camera into the surface view when the surfaceView is created
+     */
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         // To open the camera
@@ -293,6 +316,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         parameters.setPreviewSize(bestSize.width, bestSize.height);
         camera.setParameters(parameters);
 
+        // setting up the display orientation depending if the image was taken from the back or front camera
         setCameraDisplayOrientation(getActivity(), cameraID, camera);
 
         // setting the preview display
@@ -305,7 +329,9 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
 
     }
 
-
+    /*
+    Function to set the camera display orientation depending if it was the front or back camera
+     */
     public static void setCameraDisplayOrientation(Activity activity,
                                                    int cameraId, android.hardware.Camera camera) {
         android.hardware.Camera.CameraInfo info =

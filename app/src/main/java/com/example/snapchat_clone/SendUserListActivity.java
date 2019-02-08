@@ -80,7 +80,11 @@ public class SendUserListActivity extends AppCompatActivity {
         userList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
         arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_checked, userNames);
 
+        // firebase storage
         storageReference = FirebaseStorage.getInstance().getReference();
+
+        // getting the current user's display name
+        displayName = UserActivity.username;
 
         // to get all the display names of registered users
         ValueEventListener eventListener = new ValueEventListener() {
@@ -89,6 +93,7 @@ public class SendUserListActivity extends AppCompatActivity {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
                     String displayName = (String) ds.child("displayName").getValue();
                     Log.i("Display name: ", displayName);
+                    // adding all the display names of registered users into an array list
                     userNames.add(displayName);
                 }
                 Log.i("Array Size: ", Integer.toString(userNames.size()));
@@ -100,8 +105,6 @@ public class SendUserListActivity extends AppCompatActivity {
             }
         };
         mUser.addListenerForSingleValueEvent(eventListener);
-
-        displayName = UserActivity.username;
 
         // to find the image count for the current user
         final DatabaseReference mCount = mUser.child(displayName);
@@ -141,6 +144,12 @@ public class SendUserListActivity extends AppCompatActivity {
             }
         });
 
+        /*
+        function that is run when the send button is clicked
+            - grabs the byte array from image
+            - adds it to firebase storage
+            - adds the download url of image into the firebase database
+         */
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -150,21 +159,23 @@ public class SendUserListActivity extends AppCompatActivity {
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
+                // firebase storage reference
                 final StorageReference myRef = storageReference
                         .child(FIREBASE_IMAGE_STORAGE + "/" + userID + "/" + "photo" + (count)); // specifying which user file the image is going to be stored in
 
-                // grabbing the bytearray from the intent
+                // grabbing the temporary file from the intent
                 Intent intent = getIntent();
                 String filePath = intent.getStringExtra("data");
                 File file = new File(filePath);
 
+                // decoding the file into a byte array
                 Bitmap bitmap = BitmapFactory.decodeFile(file.getAbsolutePath());
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
                 bitmap.compress(Bitmap.CompressFormat.PNG,100,stream);
                 byte [] data = stream.toByteArray();
                 bitmap.recycle();
 
-                // uploading the bytearray into the database
+                // uploading the bytearray into the firebase storage
                 final UploadTask uploadTask = myRef.putBytes(data);
                 uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
@@ -178,19 +189,23 @@ public class SendUserListActivity extends AppCompatActivity {
                     }
                 });
 
-                // getting the image URL
+                // getting the image URL after the image is uploaded
                 Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
                     @Override
                     public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
                         if (!task.isSuccessful()) {
+                            // unable to upload download url into the firebase database
                             throw task.getException();
                         }
                         return myRef.getDownloadUrl();
                     }
+                    // if successfully uploaded
                 }).addOnCompleteListener(new OnCompleteListener<Uri>() {
                     @Override
                     public void onComplete(@NonNull Task<Uri> task) {
                         if (task.isSuccessful()) {
+
+                            // firebase download url
                             Uri firebaseUrl = task.getResult();
                             Log.i("Firebase URL: ",firebaseUrl.toString());
 
@@ -220,10 +235,6 @@ public class SendUserListActivity extends AppCompatActivity {
                 });
             }
         });
-
-        // count the number of images already located in the users database
-
-
         userList.setAdapter(arrayAdapter);
     }
 

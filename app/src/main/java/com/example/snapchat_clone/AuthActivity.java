@@ -158,6 +158,7 @@ public class AuthActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_auth);
 
+        // initializing widgets
         displayNameEditText = findViewById(R.id.displayNameEditText);
         emailText = findViewById(R.id.emailText);
         passwordText = findViewById(R.id.passwordText);

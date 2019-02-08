@@ -29,7 +29,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
     ImageView snapView;
 
     // arraylist for the photourls
-    HashMap<String,String> photoUrls;
+    HashMap<String,String> photos;
 
     // integer to iterate through the photoUrls(ArrayList)
     int i;
@@ -66,7 +66,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         snapView = findViewById(R.id.snapView);
 
         // initializing arrayList
-        photoUrls = new HashMap<>();
+        photos = new HashMap<>();
         uniqueId = new ArrayList<>();
         imageUrls = new ArrayList<>();
 
@@ -77,17 +77,16 @@ public class ImageDisplayActivity extends AppCompatActivity {
         // gesture detector
         gestureDetector = new GestureDetector(new GestureListener());
 
-
-        // to grab the photourl arraylist from listfragment.java
+        // to grab the photourl arraylist and clickeduser from listfragment.java
         Intent intent = getIntent();
         Bundle bundle = intent.getBundleExtra("bundle");
         if (bundle != null) {
-            photoUrls = (HashMap<String, String>) bundle.getSerializable("photoUrls");
+            photos = (HashMap<String, String>) bundle.getSerializable("photoUrls");
         }
         clickedUser = intent.getStringExtra("clickedUser");
 
-        // to load the images in the background
-        for (Map.Entry<String, String> entry : photoUrls.entrySet()) {
+        // to load the images in the background -> to view the images faster as they take a long time to load
+        for (Map.Entry<String, String> entry : photos.entrySet()) {
             Picasso.get().load(entry.getValue()).fetch();
             // to load the hashmap into 2 separate arraylists
             uniqueId.add(entry.getKey());
@@ -96,15 +95,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // load the first snap into snapView(ImageView)
         Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-
-//        // when the user clicks on the image if will move into the next image in the photoUrls(ArrayList)
-//        snapView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//
-//
-//            }
-//        });
 
         // swipe up gesture on imageview
         snapView.setOnTouchListener(new View.OnTouchListener() {
@@ -117,8 +107,12 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
     }
 
+    /*
+    GestureListener that listens for swipe down and tap on imageView
+     */
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
         @Override
+        // when the user swipes down on the screen -> returns them back to the UserActivity
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
             if (e2.getY() - e1.getY() > SWIPE_MIN_DISTANCE && Math.abs(velocityY) > SWIPE_THRESHOLD_VELOCITY) {
                 deleteSnap(i);
@@ -129,8 +123,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
             return false;
         }
 
+        // when the user taps on the imageView it shows the next image from the arraylist, if there is none it will return to the UserActivity
         @Override
-        public boolean onSingleTapConfirmed(MotionEvent e) {
+        public boolean onSingleTapUp(MotionEvent e) {
+            Log.i("SINGLE TAP: ", "CONFIRMED");
             i++;
             if (i < imageUrls.size()) {
                 Log.i("LOADING IMAGE: ", imageUrls.get(i));
