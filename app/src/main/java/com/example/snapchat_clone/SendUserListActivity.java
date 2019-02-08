@@ -77,8 +77,9 @@ public class SendUserListActivity extends AppCompatActivity {
         // initializing
         sendButton = findViewById(R.id.sendButton);
         userList = findViewById(R.id.userList);
+        userList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         userList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_checked, userNames);
+        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_activated_1, userNames);
 
         // firebase storage
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -91,10 +92,13 @@ public class SendUserListActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    String displayName = (String) ds.child("displayName").getValue();
-                    Log.i("Display name: ", displayName);
-                    // adding all the display names of registered users into an array list
-                    userNames.add(displayName);
+                    String name = (String) ds.child("displayName").getValue();
+                    Log.i("Display name: ", name);
+
+                    // checks to make sure you are not adding your own display name to the array list
+                    if (!name.equals(displayName)) {
+                        userNames.add(name);
+                    }
                 }
                 Log.i("Array Size: ", Integer.toString(userNames.size()));
             }
@@ -128,19 +132,36 @@ public class SendUserListActivity extends AppCompatActivity {
         userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CheckedTextView checkedTextView = (CheckedTextView) view;
 
-                // adds the checked user to an array list
-                if (checkedTextView.isChecked()) {
+                View selectedItemView = view;
+
+                if (selectedItemView.isActivated()) {
+                    // adds the selected user to an array list
                     sendTo.add(userNames.get(position));
                     Log.i("User Selected: ", userNames.get(position));
                 } else {
                     // removes the selected user from the array list
                     sendTo.remove(userNames.get(position));
-                    Log.i("Delete User: ", userNames.get(position));
                 }
 
                 Log.i("Send to: ", sendTo.toString());
+
+
+                //UPDATED February 8, 2019 by Nicole
+                // changed the array adapter to simplelistactivated 1
+//                CheckedTextView checkedTextView = (CheckedTextView) view;
+//
+//                // adds the checked user to an array list
+//                if (checkedTextView.isChecked()) {
+//                    sendTo.add(userNames.get(position));
+//                    Log.i("User Selected: ", userNames.get(position));
+//                } else {
+//                    // removes the selected user from the array list
+//                    sendTo.remove(userNames.get(position));
+//                    Log.i("Delete User: ", userNames.get(position));
+//                }
+//
+//                Log.i("Send to: ", sendTo.toString());
             }
         });
 

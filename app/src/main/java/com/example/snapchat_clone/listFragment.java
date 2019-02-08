@@ -133,15 +133,19 @@ public class listFragment extends Fragment {
                             snaps.clear();
                             for (int i = 0; i < uid.size(); i++) {
                             	int ghost;
-                            	String username = userId.get(uid.get(i));
-	                            String snapCount = String.valueOf(ds.child("receivedPhotos").child(uid.get(i)).getChildrenCount());
-	                            String messageCount = String.valueOf(ds.child("receivedMessages").child(uid.get(i)).getChildrenCount());
-	                            if (Integer.parseInt(snapCount) == 0 && Integer.parseInt(messageCount) == 0) {
-	                            	ghost = R.drawable.ghost_no;
-	                            } else {
-	                            	ghost = R.drawable.ghost_yes;
-	                            }
-	                            snaps.add(new UserListItem(ghost, username, snapCount, messageCount));
+
+                            	// check to not add current user into the list
+                                if (!userId.get(uid.get(i)).equals(displayName)) {
+                                    String username = userId.get(uid.get(i));
+                                    String snapCount = String.valueOf(ds.child("receivedPhotos").child(uid.get(i)).getChildrenCount());
+                                    String messageCount = String.valueOf(ds.child("receivedMessages").child(uid.get(i)).getChildrenCount());
+                                    if (Integer.parseInt(snapCount) == 0 && Integer.parseInt(messageCount) == 0) {
+                                        ghost = R.drawable.ghost_no;
+                                    } else {
+                                        ghost = R.drawable.ghost_yes;
+                                    }
+                                    snaps.add(new UserListItem(ghost, username, snapCount, messageCount));
+                                }
 
 	                            // UPDATED February 8, 2019
                                 // Now using UserListItem instead of using an array list of maps
