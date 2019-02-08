@@ -1,11 +1,15 @@
 package com.example.snapchat_clone;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -56,6 +60,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public static final int SWIPE_MIN_DISTANCE = 120;
     private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
+    // screen dimensions
+    int height;
+    int width;
+
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,6 +84,13 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // gesture detector
         gestureDetector = new GestureDetector(new GestureListener());
+
+        // height and width of screen
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        height = size.y;
+        width = size.x;
 
         // to grab the photourl arraylist and clickeduser from listfragment.java
         Intent intent = getIntent();
