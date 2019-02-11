@@ -39,8 +39,8 @@
         android:id="@+id/imageView3"
         android:layout_width="24dp"
         android:layout_height="23dp"
-        android:layout_marginBottom="-4dp"
         android:layout_alignBottom="@+id/usernameTextView"
+        android:layout_marginBottom="-4dp"
         android:layout_toStartOf="@id/messagesCountTextView"
         app:srcCompat="@drawable/message" />
 

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
@@ -59,6 +60,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
     // variable for timer
     int timer;
+    boolean isTimerRunning;
+    CountDownTimer mCountDownTimer;
 
     // firebase database
     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -120,8 +123,25 @@ public class ImageDisplayActivity extends AppCompatActivity {
             imageUrls.add(entry.getValue());
         }
 
+        // countdown timer for snaps
+        mCountDownTimer = new CountDownTimer(11000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerText.setText(String.valueOf(millisUntilFinished/1000));
+            }
+
+            @Override
+            public void onFinish() {
+                isTimerRunning = false;
+                i++;
+                playSnap(i);
+            }
+        };
+
         // load the first snap into snapView(ImageView)
         Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+        isTimerRunning = true;
+        mCountDownTimer.start();
 
         // swipe up gesture on imageview
         snapView.setOnTouchListener(new View.OnTouchListener() {
@@ -132,12 +152,15 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         });
 
+
+
     }
 
     /*
     GestureListener that listens for swipe down and tap on imageView
      */
     private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+
         @Override
         // when the user swipes down on the screen -> returns them back to the UserActivity
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
@@ -155,20 +178,43 @@ public class ImageDisplayActivity extends AppCompatActivity {
         public boolean onSingleTapUp(MotionEvent e) {
             Log.i("SINGLE TAP: ", "CONFIRMED");
             i++;
-            if (i < imageUrls.size()) {
-                Log.i("LOADING IMAGE: ", imageUrls.get(i));
-                Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-                // to delete the image from the database after viewing it
-                deleteSnap(i-1);
-
-                // if there are no more photos left to view to go back to the listFragment
-            } else if (i >= imageUrls.size()) {
-                // to delete te image from the database after viewing it
-                deleteSnap(i-1);
-                Intent back = new Intent(getApplicationContext(), UserActivity.class);
-                startActivity(back);
-            }
+            playSnap(i);
+//            if (i < imageUrls.size()) {
+//                Log.i("LOADING IMAGE: ", imageUrls.get(i));
+//                Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+//                // to delete the image from the database after viewing it
+//                deleteSnap(i-1);
+//
+//                // if there are no more photos left to view to go back to the listFragment
+//            } else if (i >= imageUrls.size()) {
+//                // to delete te image from the database after viewing it
+//                deleteSnap(i-1);
+//                Intent back = new Intent(getApplicationContext(), UserActivity.class);
+//                startActivity(back);
+//            }
             return false;
+        }
+    }
+
+    public void playSnap (Integer num) {
+        if (num < imageUrls.size()) {
+            Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
+            deleteSnap(num-1);
+            // resetting the timer
+            if (!isTimerRunning) {
+                isTimerRunning = true;
+                mCountDownTimer.start();
+            } else {
+                mCountDownTimer.cancel();
+            }
+        } else if (num >= imageUrls.size()) {
+            // cancelling the countdown timer
+            if (isTimerRunning) {
+                mCountDownTimer.cancel();
+            }
+            deleteSnap(num-1);
+            Intent back = new Intent (getApplicationContext(), UserActivity.class);
+            startActivity(back);
         }
     }
 

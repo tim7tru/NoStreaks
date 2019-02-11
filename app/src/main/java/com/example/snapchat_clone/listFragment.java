@@ -70,6 +70,9 @@ public class listFragment extends Fragment {
     // log out button
     TextView logOut;
 
+    // snapcount text view
+    TextView snapCount;
+
     public listFragment() {
         // Required empty public constructor
 
@@ -83,6 +86,7 @@ public class listFragment extends Fragment {
 
         // initializing variables and widgets
         usersListView = listView.findViewById(R.id.usersListView);
+        snapCount = listView.findViewById(R.id.snapCount);
         logOut = listView.findViewById(R.id.logOut);
         snaps = new ArrayList<>();
         uid = new ArrayList<>();
@@ -130,6 +134,11 @@ public class listFragment extends Fragment {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
+
+                            // add snapcount for the current user and display it in the listview
+                            snapCount.setVisibility(View.VISIBLE);
+                            snapCount.setText("SnapCount: " + String.valueOf(dataSnapshot.child(displayName).child("count").getValue()));
+
                             snaps.clear();
                             for (int i = 0; i < uid.size(); i++) {
                             	int ghost;
@@ -209,7 +218,6 @@ public class listFragment extends Fragment {
                 startActivity(intent);
             }
         });
-
         return listView;
     }
 
