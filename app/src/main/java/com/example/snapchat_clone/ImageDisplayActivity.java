@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
@@ -14,6 +15,9 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -50,6 +54,12 @@ public class ImageDisplayActivity extends AppCompatActivity {
     // ArrayList for imageUrls
     ArrayList<String> imageUrls;
 
+    // timer text
+    TextView timerText;
+
+    // variable for timer
+    int timer;
+
     // firebase database
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference mRoot = database.getReference();
@@ -72,6 +82,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // initializing widgets
         snapView = findViewById(R.id.snapView);
+        timerText = findViewById(R.id.timerText);
 
         // initializing arrayList
         photos = new HashMap<>();
@@ -80,6 +91,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // initializing variables
         i = 0;
+        timer = 10;
         displayName = UserActivity.username;
 
         // gesture detector

@@ -3,19 +3,24 @@ package com.example.snapchat_clone;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.Continuation;
@@ -36,6 +41,7 @@ import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +52,7 @@ public class SendUserListActivity extends AppCompatActivity {
     // widgets
     ListView userList;
     ImageView sendButton;
+    ImageView backButton;
 
     // list
     ArrayList<String> userNames = new ArrayList<>();
@@ -76,16 +83,41 @@ public class SendUserListActivity extends AppCompatActivity {
 
         // initializing
         sendButton = findViewById(R.id.sendButton);
+        backButton = findViewById(R.id.backButton);
         userList = findViewById(R.id.userList);
         userList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         userList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_activated_1, userNames);
+        arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, userNames) {
+            // updating the look of the text in the list view
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = view.findViewById(android.R.id.text1);
+                Typeface typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_medium);
+                textView.setTextSize(24);
+                textView.setTypeface(typeface);
+                textView.setTextColor(Color.DKGRAY);
+                return view;
+            }
+        };
+
 
         // firebase storage
         storageReference = FirebaseStorage.getInstance().getReference();
 
         // getting the current user's display name
         displayName = UserActivity.username;
+
+        /*
+            on click listener for the back button to go back to the camera fragment when tapped
+         */
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("BUTTON CLICKED: ", "back button");
+                finish();
+            }
+        });
 
         // to get all the display names of registered users
         ValueEventListener eventListener = new ValueEventListener() {
