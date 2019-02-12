@@ -46,7 +46,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/snapView"
-        app:srcCompat="@drawable/whitetransparentcircle" />
+        app:srcCompat="@drawable/circle" />
 
     <ImageView
         android:id="@+id/sendButton"
@@ -67,7 +67,7 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/whitecamera" />
+        app:srcCompat="@drawable/whitecameraswitch" />
 
     <ImageView
         android:id="@+id/textButton"
