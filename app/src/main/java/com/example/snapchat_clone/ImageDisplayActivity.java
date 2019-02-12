@@ -38,9 +38,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
     // imageview to display the snaps
     ImageView snapView;
 
-    // arraylist for the photourls
-    HashMap<String,String> photos;
-
     // integer to iterate through the photoUrls(ArrayList)
     int i;
 
@@ -59,7 +56,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
     // timer text
     TextView timerText;
 
-    // variable for timer
+    // variables for timer
     int timer;
     boolean isTimerRunning;
     CountDownTimer mCountDownTimer;
@@ -74,7 +71,10 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public static final int SWIPE_MIN_DISTANCE = 120;
     private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
+    // array list for text from images
     ArrayList<String> text;
+
+    // text view that will show the text from images
     TextView textView;
 
     @SuppressLint("ClickableViewAccessibility")
@@ -89,7 +89,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
         textView = findViewById(R.id.textView);
 
         // initializing arrayList
-        photos = new HashMap<>();
         uniqueId = new ArrayList<>();
         imageUrls = new ArrayList<>();
         text = new ArrayList<>();
@@ -115,7 +114,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (int h = 0; h < uniqueId.size(); h++) {
-//                    Log.i("TEXT", String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(i)).child("text").getValue()));
+                    // adding each individual image and text into two different array lists
                     text.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("text").getValue()));
                     imageUrls.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("url").getValue()));
 
@@ -123,19 +122,22 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 Log.i("TEXT ARRAY: ", text.toString());
                 Log.i("IMAGE URLS: ", imageUrls.toString());
 
+                // preload the images so that they will appear faster
                 for (int j = 0; j < imageUrls.size(); j++) {
                     Picasso.get().load(imageUrls.get(j)).fetch();
                 }
 
                 // load the first snap into snapView(ImageView)
                 if (text.get(i).equals("")) {
+                    // if there is no text associated with the image
                     Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+                    // starting the countdown timer
                     isTimerRunning = true;
                     mCountDownTimer.start();
                 } else {
-                    textView.setText(text.get(i));
-                    textView.setVisibility(View.VISIBLE);
+                    // if there is text along with the image
                     Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+                    // starting the countdown timer
                     isTimerRunning = true;
                     mCountDownTimer.start();
                 }
@@ -164,7 +166,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         };
 
-        // swipe up gesture on imageview
+        // setting up the gesture listener for the imageview
         snapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -203,12 +205,18 @@ public class ImageDisplayActivity extends AppCompatActivity {
         }
     }
 
+    /*
+    Function that sets the image view with the next step and calls the function to delete the previous snap
+     */
     public void playSnap (Integer num) {
+        // if there are still images left in imagesUrls
         if (num < imageUrls.size()) {
+            // if there is no text along with the image
             if (text.get(num).equals("")) {
                 textView.setVisibility(View.INVISIBLE);
                 Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
                 deleteSnap(num - 1);
+                // if there is text alone with the image
             } else {
                 textView.setText(text.get(num));
                 textView.setVisibility(View.VISIBLE);
@@ -224,12 +232,14 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 mCountDownTimer.cancel();
                 mCountDownTimer.start();
             }
+            // if there are no more images to show
         } else if (num >= imageUrls.size()) {
             // cancelling the countdown timer
             if (isTimerRunning) {
                 isTimerRunning = false;
                 mCountDownTimer.cancel();
             }
+            // returning back to the list view
             deleteSnap(num-1);
             Intent back = new Intent (getApplicationContext(), UserActivity.class);
             startActivity(back);
