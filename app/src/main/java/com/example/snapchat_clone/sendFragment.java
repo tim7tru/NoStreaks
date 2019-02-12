@@ -3,6 +3,7 @@ package com.example.snapchat_clone;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -10,10 +11,12 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.os.Bundle;
+import android.renderscript.ScriptGroup;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -21,8 +24,10 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.firebase.storage.FirebaseStorage;
@@ -61,6 +66,13 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
     //camera switch
     ImageView cameraSwitch;
 
+    // text button
+    ImageView textButton;
+    TextView textView;
+
+    // input touch manager
+    InputMethodManager imm;
+
 
 
     public sendFragment() {
@@ -81,6 +93,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         deleteImage = sendView.findViewById(R.id.deleteImage);
         sendButton = sendView.findViewById(R.id.sendButton);
         cameraSwitch = sendView.findViewById(R.id.cameraSwitch);
+        textButton = sendView.findViewById(R.id.textButton);
+        textView = sendView.findViewById(R.id.textView);
 
         // Firebase Storage Reference
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -104,6 +118,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                     deleteImage.setVisibility(View.VISIBLE);
                     sendButton.setVisibility(View.VISIBLE);
                     cameraSwitch.setVisibility(View.INVISIBLE);
+                    textButton.setVisibility(View.VISIBLE);
 
                     // Rotate the Image
                     final Bitmap rotatedBitmap = rotate(bitmap);
@@ -124,6 +139,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                             // intent to the SendUserListActivity to choose who to send the image to
                             Intent intent = new Intent(getActivity(), SendUserListActivity.class);
                             intent.putExtra("data", filePath);
+                            String text = String.valueOf(textView.getText());
+                            intent.putExtra("text", text);
                             startActivity(intent);
                             bitmap.recycle();
                         }
@@ -146,6 +163,8 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                 surfaceView.setVisibility(View.VISIBLE);
                 captureButton.setVisibility(View.VISIBLE);
                 cameraSwitch.setVisibility(View.VISIBLE);
+                textButton.setVisibility(View.INVISIBLE);
+                textView.setVisibility(View.INVISIBLE);
             }
         });
 
@@ -226,6 +245,33 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             }
         });
 
+        textButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("ON CLICK: ", "TEXT BUTTON");
+                if (textView.getVisibility() == View.VISIBLE) {
+                    textView.setVisibility(View.INVISIBLE);
+                    imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                } else {
+                    textView.setVisibility(View.VISIBLE);
+                    textView.setText("");
+                }
+            }
+        });
+
+        // to hide the keyboard when clicking outside of the textview
+        imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                if (textView.getVisibility() == View.VISIBLE) {
+                    imm = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+                    imm.hideSoftInputFromWindow(v.getWindowToken(), 0);
+                }
+            }
+        });
+
         return sendView;
     }
 
@@ -246,10 +292,11 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
             os.close();
         } catch (Exception e) {
             e.printStackTrace();
-}
+        }
 
         return imageFile.getAbsolutePath();
-                }
+
+    }
 
     /*
     Function to rotate the bitmap to the proper orientation depending on if the image was taken from the front or back camera

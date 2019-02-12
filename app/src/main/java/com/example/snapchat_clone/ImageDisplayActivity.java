@@ -2,6 +2,7 @@ package com.example.snapchat_clone;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
@@ -73,9 +74,8 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public static final int SWIPE_MIN_DISTANCE = 120;
     private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
-    // screen dimensions
-    int height;
-    int width;
+    ArrayList<String> text;
+    TextView textView;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -86,11 +86,13 @@ public class ImageDisplayActivity extends AppCompatActivity {
         // initializing widgets
         snapView = findViewById(R.id.snapView);
         timerText = findViewById(R.id.timerText);
+        textView = findViewById(R.id.textView);
 
         // initializing arrayList
         photos = new HashMap<>();
         uniqueId = new ArrayList<>();
         imageUrls = new ArrayList<>();
+        text = new ArrayList<>();
 
         // initializing variables
         i = 0;
@@ -98,33 +100,57 @@ public class ImageDisplayActivity extends AppCompatActivity {
         displayName = UserActivity.username;
 
         // gesture detector
-        gestureDetector = new GestureDetector(new GestureListener());
+        gestureDetector = new GestureDetector(this , new MyGestureListener());
 
-        // height and width of screen
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        height = size.y;
-        width = size.x;
-
-        // to grab the photourl arraylist and clickeduser from listfragment.java
+        // grab the clicked user and arraylist of unique ids for each image
         Intent intent = getIntent();
-        Bundle bundle = intent.getBundleExtra("bundle");
-        if (bundle != null) {
-            photos = (HashMap<String, String>) bundle.getSerializable("photoUrls");
-        }
         clickedUser = intent.getStringExtra("clickedUser");
+        uniqueId = intent.getStringArrayListExtra("keys");
 
-        // to load the images in the background -> to view the images faster as they take a long time to load
-        for (Map.Entry<String, String> entry : photos.entrySet()) {
-            Picasso.get().load(entry.getValue()).fetch();
-            // to load the hashmap into 2 separate arraylists
-            uniqueId.add(entry.getKey());
-            imageUrls.add(entry.getValue());
-        }
+        Log.i("KEYS: ", uniqueId.toString());
+
+        // load the text, and image urls into separate arraylists
+        Query user = mUser.child(displayName);
+        user.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (int h = 0; h < uniqueId.size(); h++) {
+//                    Log.i("TEXT", String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(i)).child("text").getValue()));
+                    text.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("text").getValue()));
+                    imageUrls.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("url").getValue()));
+
+                }
+                Log.i("TEXT ARRAY: ", text.toString());
+                Log.i("IMAGE URLS: ", imageUrls.toString());
+
+                for (int j = 0; j < imageUrls.size(); j++) {
+                    Picasso.get().load(imageUrls.get(j)).fetch();
+                }
+
+                // load the first snap into snapView(ImageView)
+                if (text.get(i).equals("")) {
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+                    isTimerRunning = true;
+                    mCountDownTimer.start();
+                } else {
+                    textView.setText(text.get(i));
+                    textView.setVisibility(View.VISIBLE);
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+                    isTimerRunning = true;
+                    mCountDownTimer.start();
+                }
+
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
 
         // countdown timer for snaps
-        mCountDownTimer = new CountDownTimer(11000, 1000) {
+        mCountDownTimer = new CountDownTimer(12000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 timerText.setText(String.valueOf(millisUntilFinished/1000));
@@ -138,11 +164,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         };
 
-        // load the first snap into snapView(ImageView)
-        Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-        isTimerRunning = true;
-        mCountDownTimer.start();
-
         // swipe up gesture on imageview
         snapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
@@ -153,13 +174,12 @@ public class ImageDisplayActivity extends AppCompatActivity {
         });
 
 
-
     }
 
     /*
     GestureListener that listens for swipe down and tap on imageView
      */
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
 
         @Override
         // when the user swipes down on the screen -> returns them back to the UserActivity
@@ -170,7 +190,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), UserActivity.class);
                 startActivity(intent);
             }
-            return false;
+            return true;
         }
 
         // when the user taps on the imageView it shows the next image from the arraylist, if there is none it will return to the UserActivity
@@ -179,37 +199,35 @@ public class ImageDisplayActivity extends AppCompatActivity {
             Log.i("SINGLE TAP: ", "CONFIRMED");
             i++;
             playSnap(i);
-//            if (i < imageUrls.size()) {
-//                Log.i("LOADING IMAGE: ", imageUrls.get(i));
-//                Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-//                // to delete the image from the database after viewing it
-//                deleteSnap(i-1);
-//
-//                // if there are no more photos left to view to go back to the listFragment
-//            } else if (i >= imageUrls.size()) {
-//                // to delete te image from the database after viewing it
-//                deleteSnap(i-1);
-//                Intent back = new Intent(getApplicationContext(), UserActivity.class);
-//                startActivity(back);
-//            }
-            return false;
+            return true;
         }
     }
 
     public void playSnap (Integer num) {
         if (num < imageUrls.size()) {
-            Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
-            deleteSnap(num-1);
+            if (text.get(num).equals("")) {
+                textView.setVisibility(View.INVISIBLE);
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
+                deleteSnap(num - 1);
+            } else {
+                textView.setText(text.get(num));
+                textView.setVisibility(View.VISIBLE);
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
+                deleteSnap(num-1);
+            }
             // resetting the timer
             if (!isTimerRunning) {
                 isTimerRunning = true;
                 mCountDownTimer.start();
             } else {
+                isTimerRunning = true;
                 mCountDownTimer.cancel();
+                mCountDownTimer.start();
             }
         } else if (num >= imageUrls.size()) {
             // cancelling the countdown timer
             if (isTimerRunning) {
+                isTimerRunning = false;
                 mCountDownTimer.cancel();
             }
             deleteSnap(num-1);

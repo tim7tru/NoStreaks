@@ -46,7 +46,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/snapView"
-        app:srcCompat="@drawable/capture" />
+        app:srcCompat="@drawable/whitetransparentcircle" />
 
     <ImageView
         android:id="@+id/sendButton"
@@ -67,6 +67,34 @@
         android:layout_marginEnd="16dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/cameraswitch" />
+        app:srcCompat="@drawable/whitecamera" />
+
+    <ImageView
+        android:id="@+id/textButton"
+        android:layout_width="63dp"
+        android:layout_height="67dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/snapView"
+        app:srcCompat="@drawable/text" />
+
+    <EditText
+        android:id="@+id/textView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="#66000000"
+        android:ems="10"
+        android:fontFamily="@font/roboto_medium"
+        android:inputType="textPersonName"
+        android:textAlignment="center"
+        android:textColor="@color/common_google_signin_btn_text_dark_default"
+        android:textSize="24sp"
+        android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/snapView"
+        app:layout_constraintStart_toStartOf="@+id/snapView"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </android.support.constraint.ConstraintLayout>

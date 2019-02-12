@@ -1,5 +1,6 @@
 package com.example.snapchat_clone;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,6 +37,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
@@ -75,6 +77,11 @@ public class SendUserListActivity extends AppCompatActivity {
 
     // firebase storage file path
     String FIREBASE_IMAGE_STORAGE = "photos/users/";
+
+    // progress dialog for uploading photos
+    ProgressDialog progressDialog;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,7 +214,13 @@ public class SendUserListActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Log.i("Upload Photo: ", "attempting to upload photo");
-                Toast.makeText(SendUserListActivity.this, "Attempting to send photo...", Toast.LENGTH_SHORT).show();
+//                Toast.makeText(SendUserListActivity.this, "Attempting to send photo...", Toast.LENGTH_SHORT).show();
+
+                // progress dialog
+                progressDialog = new ProgressDialog(SendUserListActivity.this);
+                progressDialog.setMessage("Sending Snap");
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressDialog.show();
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -219,6 +232,8 @@ public class SendUserListActivity extends AppCompatActivity {
                 // grabbing the temporary file from the intent
                 Intent intent = getIntent();
                 String filePath = intent.getStringExtra("data");
+                final String text = intent.getStringExtra("text");
+                Log.i("STRING: ", text);
                 File file = new File(filePath);
 
                 // decoding the file into a byte array
@@ -234,33 +249,13 @@ public class SendUserListActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.i("Photo upload:", "SUCCESS");
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.i("Photo upload: ", "FAILED");
-                    }
-                });
 
-                // getting the image URL after the image is uploaded
-                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                    @Override
-                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                        if (!task.isSuccessful()) {
-                            // unable to upload download url into the firebase database
-                            throw task.getException();
-                        }
-                        return myRef.getDownloadUrl();
-                    }
-                    // if successfully uploaded
-                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-
-                            // firebase download url
-                            Uri firebaseUrl = task.getResult();
-                            Log.i("Firebase URL: ",firebaseUrl.toString());
+                        myRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                progressDialog.cancel();
+                                Uri firebaseUrl = uri;
+                                Log.i("FIREBASE URL: ", uri.toString());
 
                             // add the image URL into the firebase database
                             Log.i("add photo to database: ", "starting to add photo to database");
@@ -275,16 +270,28 @@ public class SendUserListActivity extends AppCompatActivity {
                             for (int i = 0; i < sendTo.size(); i++) {
                                 DatabaseReference mPhotos = mUser.child(sendTo.get(i)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
                                 String photoKey = mPhotos.push().getKey();
-                                mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                                mPhotos.child(photoKey).child("url").setValue(firebaseUrl.toString());
+                                mPhotos.child(photoKey).child("text").setValue(text);
                             }
-                            Toast.makeText(SendUserListActivity.this, "Sent photos!", Toast.LENGTH_SHORT).show();
 
                             // return to the list view on finishing sending photo
                             Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
                             startActivity(goBack);
-                        }
-                    }
+                            }
+                        });
 
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        progressDialog.cancel();
+                        Toast.makeText(SendUserListActivity.this, "Photo Upload FAILED", Toast.LENGTH_SHORT).show();
+                    }
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+
+                    }
                 });
             }
         });

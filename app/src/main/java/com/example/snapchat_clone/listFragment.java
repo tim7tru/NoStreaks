@@ -61,7 +61,8 @@ public class listFragment extends Fragment {
     ArrayList<String> usersDisplayName;
 
     // ArrayList for photo download url
-    HashMap<String, String> photoUrls;
+//    HashMap<String, String> photoUrls;
+    ArrayList<String> photoUrls;
 
     // array list adapters
     SimpleAdapter arrayAdapter;
@@ -92,7 +93,8 @@ public class listFragment extends Fragment {
         uid = new ArrayList<>();
         userId = new HashMap<>();
         usersDisplayName = new ArrayList<>();
-        photoUrls = new HashMap<>();
+//        photoUrls = new HashMap<>();
+        photoUrls = new ArrayList<>();
 
         // to find the display name of the current user
         final Query getDisplayName = mUserRef.orderByChild("uid").equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -255,23 +257,30 @@ public class listFragment extends Fragment {
                             // get the unique key for each of the photos
                             String key = ds.getKey();
                             // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
-                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(uid.get(position)).child(key).getValue()));
+//                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(uid.get(position)).child(key).getValue()));
+                            photoUrls.add(key);
+
                         }
 
-                        Log.i("PHOTO URLS: ", photoUrls.toString());
+                        Log.i("KEY: ", photoUrls.toString());
 
                         // check to see if the user has sent you any photos
                         if (photoUrls.isEmpty()) {
                             Toast.makeText(getActivity(), "There are no snaps!", Toast.LENGTH_SHORT).show();
                         } else {
 
-                            // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
-                            Bundle bundle = new Bundle();
-                            bundle.putSerializable("photoUrls", photoUrls);
                             Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
-                            intent.putExtra("bundle", bundle);
                             intent.putExtra("clickedUser", uid.get(position));
+                            intent.putExtra("keys", photoUrls);
                             startActivity(intent);
+
+                            // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
+//                            Bundle bundle = new Bundle();
+//                            bundle.putSerializable("photoUrls", photoUrls);
+//                            Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
+//                            intent.putExtra("bundle", bundle);
+//                            intent.putExtra("clickedUser", uid.get(position));
+//                            startActivity(intent);
                         }
                     }
 
