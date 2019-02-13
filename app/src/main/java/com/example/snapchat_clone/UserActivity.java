@@ -78,6 +78,7 @@ public class UserActivity extends AppCompatActivity {
 
 				    Log.i("USERNAME: ", username);
 
+				    // add token ID into the database for the user that is logged in
                     final DatabaseReference tokenRef = mUserRef.child(username).child("tokenID");
 
                     FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
