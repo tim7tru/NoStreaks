@@ -269,6 +269,7 @@ public class listFragment extends Fragment {
                             // get the unique key for each of the photos
                             String key = ds.getKey();
                             // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
+                            // UPDATED : by Nicole -> No longer using a hashmap to store data
 //                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(uid.get(position)).child(key).getValue()));
                             photoUrls.add(key);
 
@@ -286,6 +287,7 @@ public class listFragment extends Fragment {
                             intent.putExtra("keys", photoUrls);
                             startActivity(intent);
 
+                            // UPDATED: By Nicole -> No longer using a hashmap to store data
                             // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
 //                            Bundle bundle = new Bundle();
 //                            bundle.putSerializable("photoUrls", photoUrls);

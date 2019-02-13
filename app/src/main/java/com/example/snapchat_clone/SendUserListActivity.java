@@ -274,6 +274,8 @@ public class SendUserListActivity extends AppCompatActivity {
                                 mPhotos.child(photoKey).child("text").setValue(text);
                             }
 
+
+
                             // return to the list view on finishing sending photo
                             Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
                             startActivity(goBack);
