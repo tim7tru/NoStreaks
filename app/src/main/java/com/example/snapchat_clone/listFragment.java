@@ -15,6 +15,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -22,9 +24,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -48,8 +53,9 @@ public class listFragment extends Fragment {
     // Array list of class UserListItem that has displayName, number of snaps waiting and number of messages waiting
     ArrayList<UserListItem> snaps;
 
-    // Hashmap with key: unique id, value: display name for all registered users
-    HashMap<String, String> userId;
+    // LinkedHashmap with key: unique id, value: display name for all registered users
+    // - using a linkedhashmap because it orders it by insertion
+    LinkedHashMap<String, String> userId;
 
     // array list of all the unique ids of registered users
     ArrayList<String> uid;
@@ -91,7 +97,7 @@ public class listFragment extends Fragment {
         logOut = listView.findViewById(R.id.logOut);
         snaps = new ArrayList<>();
         uid = new ArrayList<>();
-        userId = new HashMap<>();
+        userId = new LinkedHashMap<>();
         usersDisplayName = new ArrayList<>();
 //        photoUrls = new HashMap<>();
         photoUrls = new ArrayList<>();
@@ -124,11 +130,13 @@ public class listFragment extends Fragment {
                 uid.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                        userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
                         uid.add(String.valueOf(ds.child("uid").getValue()));
+                        userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
                     }
-                    Log.i("User IDs: ", userId.toString());
                 }
+
+                Log.i("User IDs: ", userId.toString());
+                Log.i("UID: ", uid.toString());
 
                 // to query into the database to grab information about number of snaps and messages for each user relevant to the current user
                 Query photos = mUserRef.orderByChild("displayName").equalTo(displayName);
@@ -185,7 +193,7 @@ public class listFragment extends Fragment {
 
             }
         };
-        mUserRef.addValueEventListener(userID);
+        mUserRef.orderByKey().addValueEventListener(userID);
 
 
         // setting up the array adapter for the list view
@@ -247,13 +255,17 @@ public class listFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
 
+                Log.i("UID: ", uid.get(position+1));
+
                 // query into the database for image sent from the user that was clicked
                 final Query photoInfo = mUserRef.child(displayName);
                 photoInfo.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         photoUrls.clear();
-                        for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(uid.get(position)).getChildren()) {
+
+                        // have to +1 to the position because current logged in user is not displayed on the list
+                        for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(uid.get(position+1)).getChildren()) {
                             // get the unique key for each of the photos
                             String key = ds.getKey();
                             // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
@@ -270,7 +282,7 @@ public class listFragment extends Fragment {
                         } else {
 
                             Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
-                            intent.putExtra("clickedUser", uid.get(position));
+                            intent.putExtra("clickedUser", uid.get(position+1));
                             intent.putExtra("keys", photoUrls);
                             startActivity(intent);
 

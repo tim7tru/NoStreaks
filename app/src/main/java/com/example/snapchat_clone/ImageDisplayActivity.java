@@ -20,12 +20,16 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
 
 
@@ -76,6 +80,11 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
     // text view that will show the text from images
     TextView textView;
+
+    // firebase storage reference
+    StorageReference storageReference;
+    // firebase storage file path
+    String FIREBASE_IMAGE_STORAGE = "photos/users/";
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -259,6 +268,20 @@ public class ImageDisplayActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
+            }
+        });
+
+        // deleting image from firebase storage by their download url
+        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrls.get(position));
+        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.i("STORAGE DELETION: ", "SUCCESSFUL");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.i("STORAGE DELETION: ", "FAILED");
             }
         });
     }
