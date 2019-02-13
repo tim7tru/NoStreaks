@@ -1,7 +1,7 @@
 package com.example.snapchat_clone;
 
 public class User {
-	public String displayName, email, uid, receivedPhotos, receivedMessages;
+	public String displayName, email, uid, receivedPhotos, receivedMessages, tokenID, notifications;
 	public float latitude, longitude;
 	public int count;
 
@@ -18,6 +18,8 @@ public class User {
 		this.count = 0;
 		this.receivedMessages = "";
 		this.receivedPhotos = "";
+		this.tokenID = "";
+		this.notifications = "";
 	}
 
 	public String getEmail() {

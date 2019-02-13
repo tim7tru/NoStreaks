@@ -242,7 +242,7 @@ public class listFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getContext(), ChatActivity.class);
-                intent.putExtra("userClicked", usersDisplayName.get(position));
+                intent.putExtra("userClicked", usersDisplayName.get(position+1));
                 startActivity(intent);
                 return true;
             }

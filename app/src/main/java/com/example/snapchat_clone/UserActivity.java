@@ -22,14 +22,20 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.GetTokenResult;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.iid.InstanceIdResult;
 
 public class UserActivity extends AppCompatActivity {
 
@@ -69,6 +75,19 @@ public class UserActivity extends AppCompatActivity {
 					    username = (String) snapshot.child("displayName").getValue();
 					    Log.i("Username in UserActivity", username + "");
 				    }
+
+				    Log.i("USERNAME: ", username);
+
+                    final DatabaseReference tokenRef = mUserRef.child(username).child("tokenID");
+
+                    FirebaseInstanceId.getInstance().getInstanceId().addOnCompleteListener(new OnCompleteListener<InstanceIdResult>() {
+                        @Override
+                        public void onComplete(@NonNull Task<InstanceIdResult> task) {
+                            String token = task.getResult().getToken();
+                            Log.i("TOKEN: ", token);
+                            tokenRef.setValue(token);
+                        }
+                    });
 			    }
 		    }
 

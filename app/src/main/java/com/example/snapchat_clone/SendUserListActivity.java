@@ -36,6 +36,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -80,6 +81,9 @@ public class SendUserListActivity extends AppCompatActivity {
 
     // progress dialog for uploading photos
     ProgressDialog progressDialog;
+
+    //firebase firestore
+    FirebaseFirestore mFirestore;
 
 
 
@@ -272,9 +276,14 @@ public class SendUserListActivity extends AppCompatActivity {
                                 String photoKey = mPhotos.push().getKey();
                                 mPhotos.child(photoKey).child("url").setValue(firebaseUrl.toString());
                                 mPhotos.child(photoKey).child("text").setValue(text);
+
+                                // adding notifications to firebase database
+                                DatabaseReference mNotifications = mUser.child(sendTo.get(i)).child("notifications");
+                                String notificationKey = mNotifications.push().getKey();
+                                mNotifications.child(notificationKey).child("message").setValue("Snap Received");
+                                mNotifications.child(notificationKey).child("from").setValue(displayName);
+
                             }
-
-
 
                             // return to the list view on finishing sending photo
                             Intent goBack = new Intent(getApplicationContext(), UserActivity.class);

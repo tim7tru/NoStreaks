@@ -4,6 +4,7 @@
     <string name="sign_up">SIGN UP</string>
     <string name="email">EMAIL</string>
     <string name="email_or_username">EMAIL OR USERNAME</string>
+    <string name="default_notification_channel_id">Tvac_CH_01</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
