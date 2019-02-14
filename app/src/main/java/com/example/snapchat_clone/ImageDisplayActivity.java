@@ -1,3 +1,7 @@
+/**
+ * To view the snaps that the user receives
+ */
+
 package com.example.snapchat_clone;
 
 import android.annotation.SuppressLint;
@@ -30,6 +34,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 
@@ -139,19 +144,35 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 // load the first snap into snapView(ImageView)
                 if (text.get(i).equals("")) {
                     // if there is no text associated with the image
-                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-                    // starting the countdown timer
-                    isTimerRunning = true;
-                    mCountDownTimer.start();
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            // starting the countdown timer
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+
+                        }
+                    });
                 } else {
                     // if there is text along with the image
-                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-                    // starting the countdown timer
-                    isTimerRunning = true;
-                    mCountDownTimer.start();
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            // starting the countdown timer
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+
+                        }
+                    });
                 }
-
-
             }
 
             @Override
@@ -161,7 +182,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
         });
 
         // countdown timer for snaps
-        mCountDownTimer = new CountDownTimer(12000, 1000) {
+        mCountDownTimer = new CountDownTimer(10000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
                 timerText.setText(String.valueOf(millisUntilFinished/1000));
@@ -217,29 +238,56 @@ public class ImageDisplayActivity extends AppCompatActivity {
     /*
     Function that sets the image view with the next step and calls the function to delete the previous snap
      */
-    public void playSnap (Integer num) {
+    public void playSnap (final Integer num) {
         // if there are still images left in imagesUrls
         if (num < imageUrls.size()) {
             // if there is no text along with the image
             if (text.get(num).equals("")) {
-                textView.setVisibility(View.INVISIBLE);
-                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
-                deleteSnap(num - 1);
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        textView.setVisibility(View.INVISIBLE);
+                        // resetting the timer
+                        if (!isTimerRunning) {
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        } else {
+                            isTimerRunning = true;
+                            mCountDownTimer.cancel();
+                            mCountDownTimer.start();
+                        }
+                        deleteSnap(num - 1);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+
+                    }
+                });
                 // if there is text alone with the image
             } else {
-                textView.setText(text.get(num));
-                textView.setVisibility(View.VISIBLE);
-                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView);
-                deleteSnap(num-1);
-            }
-            // resetting the timer
-            if (!isTimerRunning) {
-                isTimerRunning = true;
-                mCountDownTimer.start();
-            } else {
-                isTimerRunning = true;
-                mCountDownTimer.cancel();
-                mCountDownTimer.start();
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        textView.setText(text.get(num));
+                        textView.setVisibility(View.VISIBLE);
+                        // resetting the timer
+                        if (!isTimerRunning) {
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        } else {
+                            isTimerRunning = true;
+                            mCountDownTimer.cancel();
+                            mCountDownTimer.start();
+                        }
+                        deleteSnap(num-1);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+
+                    }
+                });
             }
             // if there are no more images to show
         } else if (num >= imageUrls.size()) {

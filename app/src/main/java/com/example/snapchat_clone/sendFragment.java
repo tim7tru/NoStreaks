@@ -1,3 +1,10 @@
+/**
+ * send fragment that contains the camera in-app
+ * - has a button to toggle between the front and back camera
+ * - send button to move to senduserlistactivity
+ * - can add text to their image as well
+ */
+
 package com.example.snapchat_clone;
 
 

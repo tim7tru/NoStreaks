@@ -1,6 +1,11 @@
+/**
+ * Log in/ sign up for the app
+ */
+
 package com.example.snapchat_clone;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -182,7 +187,7 @@ public class AuthActivity extends AppCompatActivity {
             }
         });
 
-        // Disable the log in button in app create
+        // Disable the log in button on app create
         loginButton.setEnabled(false);
 
         // Setting the text of the title and button depending if log in or sign up was clicked
@@ -204,22 +209,67 @@ public class AuthActivity extends AppCompatActivity {
         /*
             EditText listener to enable/disable the log in button depending on if the EditTexts are filled out or not
         */
-        passwordText.addTextChangedListener(new TextWatcher() {
+        displayNameEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("")) {
-                    loginButton.setEnabled(true);
-                } else {
-                    loginButton.setEnabled(false);
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("") && !passwordText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 }
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("")) {
-                    loginButton.setEnabled(true);
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("") && !passwordText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        passwordText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("") && !displayNameEditText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 } else {
-                    loginButton.setEnabled(false);
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
+                }
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("") && !displayNameEditText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
+                } else {
+                    if (s.toString().trim().length() > 0 && !emailText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 }
             }
 
@@ -232,19 +282,35 @@ public class AuthActivity extends AppCompatActivity {
         emailText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("")) {
-                    loginButton.setEnabled(true);
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("") && !displayNameEditText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 } else {
-                    loginButton.setEnabled(false);
+                    if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 }
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("")) {
-                    loginButton.setEnabled(true);
+                if (displayNameEditText.getVisibility() == View.VISIBLE) {
+                    if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("") && !displayNameEditText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 } else {
-                    loginButton.setEnabled(false);
+                    if (s.toString().trim().length() > 0 && !passwordText.getText().toString().equals("")) {
+                        loginButton.setEnabled(true);
+                    } else {
+                        loginButton.setEnabled(false);
+                    }
                 }
             }
 

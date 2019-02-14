@@ -1,3 +1,10 @@
+/**
+ * senduserlistactivity -> displays the listview of all registered users
+ * - where the user can choose who to send the image too
+ * - will display a progress dialog once the send button is clicked
+ * - will move the user back to the listfragment once the snap is sent
+ */
+
 package com.example.snapchat_clone;
 
 import android.app.ProgressDialog;
@@ -36,7 +43,6 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
@@ -81,10 +87,6 @@ public class SendUserListActivity extends AppCompatActivity {
 
     // progress dialog for uploading photos
     ProgressDialog progressDialog;
-
-    //firebase firestore
-    FirebaseFirestore mFirestore;
-
 
 
     @Override
@@ -217,8 +219,6 @@ public class SendUserListActivity extends AppCompatActivity {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("Upload Photo: ", "attempting to upload photo");
-//                Toast.makeText(SendUserListActivity.this, "Attempting to send photo...", Toast.LENGTH_SHORT).show();
 
                 // progress dialog
                 progressDialog = new ProgressDialog(SendUserListActivity.this);
@@ -280,7 +280,6 @@ public class SendUserListActivity extends AppCompatActivity {
                                 // adding notifications to firebase database
                                 DatabaseReference mNotifications = mUser.child(sendTo.get(i)).child("notifications");
                                 String notificationKey = mNotifications.push().getKey();
-                                mNotifications.child(notificationKey).child("message").setValue("Snap Received");
                                 mNotifications.child(notificationKey).child("from").setValue(displayName);
 
                             }

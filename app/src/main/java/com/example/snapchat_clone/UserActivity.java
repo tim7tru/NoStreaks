@@ -1,3 +1,11 @@
+/**
+ * The activity the user gets once logged in
+ * contains 3 different fragments
+ *  1. user list -> to view all the users registered in the app
+ *  2. send -> opens the camera in-app
+ *  3. map -> can see the location of all registered users on the map
+ */
+
 package com.example.snapchat_clone;
 
 import android.Manifest;

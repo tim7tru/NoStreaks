@@ -1,3 +1,10 @@
+/**
+ * list fragment that shows all the registered users
+ * - can see how many snaps and messages are received from other users -> ghost icon will change to yellow if there are snaps or messages to view
+ * - can view these messages and snaps by either clicking/long clicking on the users name in list view
+ *
+ */
+
 package com.example.snapchat_clone;
 
 
@@ -48,8 +55,6 @@ public class listFragment extends Fragment {
     // the listView that displays all the info on the registered users
     ListView usersListView;
 
-    static String userClicked;
-
     // Array list of class UserListItem that has displayName, number of snaps waiting and number of messages waiting
     ArrayList<UserListItem> snaps;
 
@@ -60,14 +65,14 @@ public class listFragment extends Fragment {
     // array list of all the unique ids of registered users
     ArrayList<String> uid;
 
-    // display name of the current user
-    static String displayName;
+    // display name and unique id of the current user
+    String displayName;
+    String currentUid;
 
     // array list of all the display names of registered users
     ArrayList<String> usersDisplayName;
 
     // ArrayList for photo download url
-//    HashMap<String, String> photoUrls;
     ArrayList<String> photoUrls;
 
     // array list adapters
@@ -99,7 +104,6 @@ public class listFragment extends Fragment {
         uid = new ArrayList<>();
         userId = new LinkedHashMap<>();
         usersDisplayName = new ArrayList<>();
-//        photoUrls = new HashMap<>();
         photoUrls = new ArrayList<>();
 
         // to find the display name of the current user
@@ -111,6 +115,7 @@ public class listFragment extends Fragment {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
                         Log.i("current user: ", ds.child("displayName").getValue().toString());
                         displayName = ds.child("displayName").getValue().toString();
+                        currentUid = ds.child("uid").getValue().toString();
                     }
                 }
             }
@@ -130,13 +135,11 @@ public class listFragment extends Fragment {
                 uid.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                        uid.add(String.valueOf(ds.child("uid").getValue()));
+                        String uniqueId = String.valueOf(ds.child("uid").getValue());
+                        uid.add(uniqueId);
                         userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
                     }
                 }
-
-                Log.i("User IDs: ", userId.toString());
-                Log.i("UID: ", uid.toString());
 
                 // to query into the database to grab information about number of snaps and messages for each user relevant to the current user
                 Query photos = mUserRef.orderByChild("displayName").equalTo(displayName);
@@ -208,7 +211,10 @@ public class listFragment extends Fragment {
                 if (dataSnapshot.exists()) {
                     usersDisplayName.clear();
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
+                        String name = String.valueOf(snapshot.child("displayName").getValue());
+                        if (!name.equals(displayName)) {
+                            usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
+                        }
                     }
                 }
             }
@@ -242,7 +248,7 @@ public class listFragment extends Fragment {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent intent = new Intent(getContext(), ChatActivity.class);
-                intent.putExtra("userClicked", usersDisplayName.get(position+1));
+                intent.putExtra("userClicked", usersDisplayName.get(position));
                 startActivity(intent);
                 return true;
             }
@@ -255,7 +261,15 @@ public class listFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
 
-                Log.i("UID: ", uid.get(position+1));
+                // removing the current user's unique id from the arraylist so the proper unique id is grabbed on the click listener
+                for (int i = uid.size()-1;i >= 0; i--) {
+                    if (uid.get(i).equals(currentUid)) {
+                        uid.remove(uid.get(i));
+                    }
+                }
+
+                Log.i("UID: ", uid.get(position));
+
 
                 // query into the database for image sent from the user that was clicked
                 final Query photoInfo = mUserRef.child(displayName);
@@ -265,7 +279,7 @@ public class listFragment extends Fragment {
                         photoUrls.clear();
 
                         // have to +1 to the position because current logged in user is not displayed on the list
-                        for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(uid.get(position+1)).getChildren()) {
+                        for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(uid.get(position)).getChildren()) {
                             // get the unique key for each of the photos
                             String key = ds.getKey();
                             // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
@@ -283,7 +297,7 @@ public class listFragment extends Fragment {
                         } else {
 
                             Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
-                            intent.putExtra("clickedUser", uid.get(position+1));
+                            intent.putExtra("clickedUser", uid.get(position));
                             intent.putExtra("keys", photoUrls);
                             startActivity(intent);
 

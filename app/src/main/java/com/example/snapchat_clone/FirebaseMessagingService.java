@@ -6,6 +6,13 @@ import android.graphics.BitmapFactory;
 
 import com.google.firebase.messaging.RemoteMessage;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+
+/**
+notification builder for when you receive a notification
+- setting the title, text and icon
+ */
+
 public class FirebaseMessagingService extends com.google.firebase.messaging.FirebaseMessagingService {
     @Override
     public void onMessageReceived(RemoteMessage remoteMessage) {
