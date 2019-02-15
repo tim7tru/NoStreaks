@@ -50,7 +50,7 @@ public class AuthActivity extends AppCompatActivity {
 	        // If an email is inputted to the login edit text
             if (emailText.getText().toString().contains("@")) {
             	// sign in method with email and password
-                mAuth.signInWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
+                mAuth.signInWithEmailAndPassword(emailText.getText().toString().toLowerCase(), passwordText.getText().toString())
                         .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
@@ -70,7 +70,7 @@ public class AuthActivity extends AppCompatActivity {
             	 * No firebase default method to log in with a username
             	 * Therefore must get email using username as a query
             	 */
-            	final String inputUsername = emailText.getText().toString();
+            	final String inputUsername = emailText.getText().toString().toLowerCase();
 
             	// Query to get email
 	            Query nameQuery = mUsersRef.orderByChild("displayName").equalTo(inputUsername);
@@ -85,7 +85,7 @@ public class AuthActivity extends AppCompatActivity {
 				            }
 
 				            // Logging in with the queried email
-				            mAuth.signInWithEmailAndPassword(email, passwordText.getText().toString()).addOnCompleteListener(AuthActivity.this, new OnCompleteListener<AuthResult>() {
+				            mAuth.signInWithEmailAndPassword(email.toLowerCase(), passwordText.getText().toString()).addOnCompleteListener(AuthActivity.this, new OnCompleteListener<AuthResult>() {
 					            @Override
 					            public void onComplete(@NonNull Task<AuthResult> task) {
 						            if (task.isSuccessful()) {
@@ -122,13 +122,13 @@ public class AuthActivity extends AppCompatActivity {
 		            	Toast.makeText(AuthActivity.this, "This username already exists, try another.", Toast.LENGTH_SHORT).show();
 		            } else {
 		            	// if there is no result, sign up the user!
-			            mAuth.createUserWithEmailAndPassword(emailText.getText().toString(), passwordText.getText().toString())
+			            mAuth.createUserWithEmailAndPassword(emailText.getText().toString().toLowerCase(), passwordText.getText().toString())
 					            .addOnCompleteListener(AuthActivity.this, new OnCompleteListener<AuthResult>() {
 						            @Override
 						            public void onComplete(@NonNull Task<AuthResult> task) {
 							            if (task.isSuccessful()) {
-								            User user = new User(displayNameEditText.getText().toString(), emailText.getText().toString(), FirebaseAuth.getInstance().getUid());
-								            database.getReference("Users").child(displayNameEditText.getText().toString()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
+								            User user = new User(displayNameEditText.getText().toString().toLowerCase(), emailText.getText().toString().toLowerCase(), FirebaseAuth.getInstance().getUid());
+								            database.getReference("Users").child(displayNameEditText.getText().toString().toLowerCase()).setValue(user).addOnCompleteListener(new OnCompleteListener<Void>() {
 									            @Override
 									            public void onComplete(@NonNull Task<Void> task) {
 										            if (task.isSuccessful()) {

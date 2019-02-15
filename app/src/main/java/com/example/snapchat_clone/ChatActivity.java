@@ -167,7 +167,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 				if (dataSnapshot.exists()) {
 					for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
 						clickedUserUID = snapshot.child("uid").getValue(String.class);
-						// UpdateListInitial() - Line: 242
+						// UpdateListInitial() - Line: 237
 						updateListInitial();
 					}
 				}
@@ -184,7 +184,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 					public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
 						if (!firstTime) {
 							chat.add(new ChatListItem(clickedUserDisplay, dataSnapshot.getValue(String.class), false));
-							// Update() - Line: 269
+							// Update() - Line: 262
 							update();
 						}
 					}
@@ -206,7 +206,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 						if (!firstTime) {
 							chat.add(new ChatListItem(currentUserDisplay, dataSnapshot.getValue(String.class), true));
 
-							// Update() - Line: 269
+							// Update() - Line: 262
 							update();
 						}
 					}
@@ -249,7 +249,7 @@ public class ChatActivity extends AppCompatActivity implements View.OnClickListe
 							chat.add(new ChatListItem(clickedUserDisplay, children.getValue(String.class), false));
 						}
 					}
-					// Update() - Line: 269
+					// Update() - Line: 262
 					update();
 				}
 			}
