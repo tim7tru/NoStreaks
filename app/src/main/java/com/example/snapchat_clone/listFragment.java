@@ -1,3 +1,10 @@
+/**
+ * list fragment that shows all the registered users
+ * - can see how many snaps and messages are received from other users -> ghost icon will change to yellow if there are snaps or messages to view
+ * - can view these messages and snaps by either clicking/long clicking on the users name in list view
+ *
+ */
+
 package com.example.snapchat_clone;
 
 
@@ -15,6 +22,8 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -22,9 +31,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -43,25 +55,25 @@ public class listFragment extends Fragment {
     // the listView that displays all the info on the registered users
     ListView usersListView;
 
-    static String userClicked;
-
     // Array list of class UserListItem that has displayName, number of snaps waiting and number of messages waiting
     ArrayList<UserListItem> snaps;
 
-    // Hashmap with key: unique id, value: display name for all registered users
-    HashMap<String, String> userId;
+    // LinkedHashmap with key: unique id, value: display name for all registered users
+    // - using a linkedhashmap because it orders it by insertion
+    LinkedHashMap<String, String> userId;
 
     // array list of all the unique ids of registered users
     ArrayList<String> uid;
 
-    // display name of the current user
-    static String displayName;
+    // display name and unique id of the current user
+    String displayName;
+    String currentUid;
 
     // array list of all the display names of registered users
     ArrayList<String> usersDisplayName;
 
     // ArrayList for photo download url
-    HashMap<String, String> photoUrls;
+    ArrayList<String> photoUrls;
 
     // array list adapters
     SimpleAdapter arrayAdapter;
@@ -69,6 +81,9 @@ public class listFragment extends Fragment {
 
     // log out button
     TextView logOut;
+
+    // snapcount text view
+    TextView snapCount;
 
     public listFragment() {
         // Required empty public constructor
@@ -83,12 +98,13 @@ public class listFragment extends Fragment {
 
         // initializing variables and widgets
         usersListView = listView.findViewById(R.id.usersListView);
+        snapCount = listView.findViewById(R.id.snapCount);
         logOut = listView.findViewById(R.id.logOut);
         snaps = new ArrayList<>();
         uid = new ArrayList<>();
-        userId = new HashMap<>();
+        userId = new LinkedHashMap<>();
         usersDisplayName = new ArrayList<>();
-        photoUrls = new HashMap<>();
+        photoUrls = new ArrayList<>();
 
         // to find the display name of the current user
         final Query getDisplayName = mUserRef.orderByChild("uid").equalTo(FirebaseAuth.getInstance().getCurrentUser().getUid());
@@ -99,6 +115,7 @@ public class listFragment extends Fragment {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
                         Log.i("current user: ", ds.child("displayName").getValue().toString());
                         displayName = ds.child("displayName").getValue().toString();
+                        currentUid = ds.child("uid").getValue().toString();
                     }
                 }
             }
@@ -118,10 +135,10 @@ public class listFragment extends Fragment {
                 uid.clear();
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                        String uniqueId = String.valueOf(ds.child("uid").getValue());
+                        uid.add(uniqueId);
                         userId.put(String.valueOf(ds.child("uid").getValue()), String.valueOf(ds.child("displayName").getValue()));
-                        uid.add(String.valueOf(ds.child("uid").getValue()));
                     }
-                    Log.i("User IDs: ", userId.toString());
                 }
 
                 // to query into the database to grab information about number of snaps and messages for each user relevant to the current user
@@ -130,18 +147,27 @@ public class listFragment extends Fragment {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
+
+                            // add snapcount for the current user and display it in the listview
+                            snapCount.setVisibility(View.VISIBLE);
+                            snapCount.setText("SnapCount: " + String.valueOf(dataSnapshot.child(displayName).child("count").getValue()));
+
                             snaps.clear();
                             for (int i = 0; i < uid.size(); i++) {
                             	int ghost;
-                            	String username = userId.get(uid.get(i));
-	                            String snapCount = String.valueOf(ds.child("receivedPhotos").child(uid.get(i)).getChildrenCount());
-	                            String messageCount = String.valueOf(ds.child("receivedMessages").child(uid.get(i)).getChildrenCount());
-	                            if (Integer.parseInt(snapCount) == 0 && Integer.parseInt(messageCount) == 0) {
-	                            	ghost = R.drawable.ghost_no;
-	                            } else {
-	                            	ghost = R.drawable.ghost_yes;
-	                            }
-	                            snaps.add(new UserListItem(ghost, username, snapCount, messageCount));
+
+                            	// check to not add current user into the list
+                                if (!userId.get(uid.get(i)).equals(displayName)) {
+                                    String username = userId.get(uid.get(i));
+                                    String snapCount = String.valueOf(ds.child("receivedPhotos").child(uid.get(i)).getChildrenCount());
+                                    String messageCount = String.valueOf(ds.child("receivedMessages").child(uid.get(i)).getChildrenCount());
+                                    if (Integer.parseInt(snapCount) == 0 && Integer.parseInt(messageCount) == 0) {
+                                        ghost = R.drawable.ghost_no;
+                                    } else {
+                                        ghost = R.drawable.ghost_yes;
+                                    }
+                                    snaps.add(new UserListItem(ghost, username, snapCount, messageCount));
+                                }
 
 	                            // UPDATED February 8, 2019
                                 // Now using UserListItem instead of using an array list of maps
@@ -170,7 +196,7 @@ public class listFragment extends Fragment {
 
             }
         };
-        mUserRef.addValueEventListener(userID);
+        mUserRef.orderByKey().addValueEventListener(userID);
 
 
         // setting up the array adapter for the list view
@@ -185,7 +211,10 @@ public class listFragment extends Fragment {
                 if (dataSnapshot.exists()) {
                     usersDisplayName.clear();
                     for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                        usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
+                        String name = String.valueOf(snapshot.child("displayName").getValue());
+                        if (!name.equals(displayName)) {
+                            usersDisplayName.add(snapshot.child("displayName").getValue(String.class));
+                        }
                     }
                 }
             }
@@ -205,7 +234,6 @@ public class listFragment extends Fragment {
                 startActivity(intent);
             }
         });
-
         return listView;
     }
 
@@ -233,33 +261,54 @@ public class listFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
 
+                // removing the current user's unique id from the arraylist so the proper unique id is grabbed on the click listener
+                for (int i = uid.size()-1;i >= 0; i--) {
+                    if (uid.get(i).equals(currentUid)) {
+                        uid.remove(uid.get(i));
+                    }
+                }
+
+                Log.i("UID: ", uid.get(position));
+
+
                 // query into the database for image sent from the user that was clicked
                 final Query photoInfo = mUserRef.child(displayName);
                 photoInfo.addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                         photoUrls.clear();
+
+                        // have to +1 to the position because current logged in user is not displayed on the list
                         for (DataSnapshot ds : dataSnapshot.child("receivedPhotos").child(uid.get(position)).getChildren()) {
                             // get the unique key for each of the photos
                             String key = ds.getKey();
                             // grab all the photo urls based on their unique key and put it into the photoUrls (ArrayList)
-                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(uid.get(position)).child(key).getValue()));
+                            // UPDATED : by Nicole -> No longer using a hashmap to store data
+//                            photoUrls.put(key, String.valueOf(dataSnapshot.child("receivedPhotos").child(uid.get(position)).child(key).getValue()));
+                            photoUrls.add(key);
+
                         }
 
-                        Log.i("PHOTO URLS: ", photoUrls.toString());
+                        Log.i("KEY: ", photoUrls.toString());
 
                         // check to see if the user has sent you any photos
                         if (photoUrls.isEmpty()) {
                             Toast.makeText(getActivity(), "There are no snaps!", Toast.LENGTH_SHORT).show();
                         } else {
 
-                            // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
-                            Bundle bundle = new Bundle();
-                            bundle.putSerializable("photoUrls", photoUrls);
                             Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
-                            intent.putExtra("bundle", bundle);
                             intent.putExtra("clickedUser", uid.get(position));
+                            intent.putExtra("keys", photoUrls);
                             startActivity(intent);
+
+                            // UPDATED: By Nicole -> No longer using a hashmap to store data
+                            // intent to the imageDisplayActivity.java with the photoUrls(ArrayList)
+//                            Bundle bundle = new Bundle();
+//                            bundle.putSerializable("photoUrls", photoUrls);
+//                            Intent intent = new Intent(getContext(), ImageDisplayActivity.class);
+//                            intent.putExtra("bundle", bundle);
+//                            intent.putExtra("clickedUser", uid.get(position));
+//                            startActivity(intent);
                         }
                     }
 

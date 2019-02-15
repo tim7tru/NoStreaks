@@ -1,10 +1,17 @@
+/**
+ * To view the snaps that the user receives
+ */
+
 package com.example.snapchat_clone;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
@@ -14,12 +21,20 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
 
 
@@ -31,9 +46,6 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
     // imageview to display the snaps
     ImageView snapView;
-
-    // arraylist for the photourls
-    HashMap<String,String> photos;
 
     // integer to iterate through the photoUrls(ArrayList)
     int i;
@@ -50,6 +62,14 @@ public class ImageDisplayActivity extends AppCompatActivity {
     // ArrayList for imageUrls
     ArrayList<String> imageUrls;
 
+    // timer text
+    TextView timerText;
+
+    // variables for timer
+    int timer;
+    boolean isTimerRunning;
+    CountDownTimer mCountDownTimer;
+
     // firebase database
     FirebaseDatabase database = FirebaseDatabase.getInstance();
     DatabaseReference mRoot = database.getReference();
@@ -60,9 +80,16 @@ public class ImageDisplayActivity extends AppCompatActivity {
     public static final int SWIPE_MIN_DISTANCE = 120;
     private static final int SWIPE_THRESHOLD_VELOCITY = 200;
 
-    // screen dimensions
-    int height;
-    int width;
+    // array list for text from images
+    ArrayList<String> text;
+
+    // text view that will show the text from images
+    TextView textView;
+
+    // firebase storage reference
+    StorageReference storageReference;
+    // firebase storage file path
+    String FIREBASE_IMAGE_STORAGE = "photos/users/";
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -72,46 +99,104 @@ public class ImageDisplayActivity extends AppCompatActivity {
 
         // initializing widgets
         snapView = findViewById(R.id.snapView);
+        timerText = findViewById(R.id.timerText);
+        textView = findViewById(R.id.textView);
 
         // initializing arrayList
-        photos = new HashMap<>();
         uniqueId = new ArrayList<>();
         imageUrls = new ArrayList<>();
+        text = new ArrayList<>();
 
         // initializing variables
         i = 0;
+        timer = 10;
         displayName = UserActivity.username;
 
         // gesture detector
-        gestureDetector = new GestureDetector(new GestureListener());
+        gestureDetector = new GestureDetector(this , new MyGestureListener());
 
-        // height and width of screen
-        Display display = getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        height = size.y;
-        width = size.x;
-
-        // to grab the photourl arraylist and clickeduser from listfragment.java
+        // grab the clicked user and arraylist of unique ids for each image
         Intent intent = getIntent();
-        Bundle bundle = intent.getBundleExtra("bundle");
-        if (bundle != null) {
-            photos = (HashMap<String, String>) bundle.getSerializable("photoUrls");
-        }
         clickedUser = intent.getStringExtra("clickedUser");
+        uniqueId = intent.getStringArrayListExtra("keys");
 
-        // to load the images in the background -> to view the images faster as they take a long time to load
-        for (Map.Entry<String, String> entry : photos.entrySet()) {
-            Picasso.get().load(entry.getValue()).fetch();
-            // to load the hashmap into 2 separate arraylists
-            uniqueId.add(entry.getKey());
-            imageUrls.add(entry.getValue());
-        }
+        Log.i("KEYS: ", uniqueId.toString());
 
-        // load the first snap into snapView(ImageView)
-        Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
+        // load the text, and image urls into separate arraylists
+        Query user = mUser.child(displayName);
+        user.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (int h = 0; h < uniqueId.size(); h++) {
+                    // adding each individual image and text into two different array lists
+                    text.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("text").getValue()));
+                    imageUrls.add(String.valueOf(dataSnapshot.child("receivedPhotos").child(clickedUser).child(uniqueId.get(h)).child("url").getValue()));
 
-        // swipe up gesture on imageview
+                }
+                Log.i("TEXT ARRAY: ", text.toString());
+                Log.i("IMAGE URLS: ", imageUrls.toString());
+
+                // preload the images so that they will appear faster
+                for (int j = 0; j < imageUrls.size(); j++) {
+                    Picasso.get().load(imageUrls.get(j)).fetch();
+                }
+
+                // load the first snap into snapView(ImageView)
+                if (text.get(i).equals("")) {
+                    // if there is no text associated with the image
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            // starting the countdown timer
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+
+                        }
+                    });
+                } else {
+                    // if there is text along with the image
+                    Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            // starting the countdown timer
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        // countdown timer for snaps
+        mCountDownTimer = new CountDownTimer(10000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                timerText.setText(String.valueOf(millisUntilFinished/1000));
+            }
+
+            @Override
+            public void onFinish() {
+                isTimerRunning = false;
+                i++;
+                playSnap(i);
+            }
+        };
+
+        // setting up the gesture listener for the imageview
         snapView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -120,12 +205,14 @@ public class ImageDisplayActivity extends AppCompatActivity {
             }
         });
 
+
     }
 
     /*
     GestureListener that listens for swipe down and tap on imageView
      */
-    private class GestureListener extends GestureDetector.SimpleOnGestureListener {
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+
         @Override
         // when the user swipes down on the screen -> returns them back to the UserActivity
         public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
@@ -135,7 +222,7 @@ public class ImageDisplayActivity extends AppCompatActivity {
                 Intent intent = new Intent(getApplicationContext(), UserActivity.class);
                 startActivity(intent);
             }
-            return false;
+            return true;
         }
 
         // when the user taps on the imageView it shows the next image from the arraylist, if there is none it will return to the UserActivity
@@ -143,20 +230,76 @@ public class ImageDisplayActivity extends AppCompatActivity {
         public boolean onSingleTapUp(MotionEvent e) {
             Log.i("SINGLE TAP: ", "CONFIRMED");
             i++;
-            if (i < imageUrls.size()) {
-                Log.i("LOADING IMAGE: ", imageUrls.get(i));
-                Picasso.get().load(imageUrls.get(i)).fit().centerCrop().into(snapView);
-                // to delete the image from the database after viewing it
-                deleteSnap(i-1);
+            playSnap(i);
+            return true;
+        }
+    }
 
-                // if there are no more photos left to view to go back to the listFragment
-            } else if (i >= imageUrls.size()) {
-                // to delete te image from the database after viewing it
-                deleteSnap(i-1);
-                Intent back = new Intent(getApplicationContext(), UserActivity.class);
-                startActivity(back);
+    /*
+    Function that sets the image view with the next step and calls the function to delete the previous snap
+     */
+    public void playSnap (final Integer num) {
+        // if there are still images left in imagesUrls
+        if (num < imageUrls.size()) {
+            // if there is no text along with the image
+            if (text.get(num).equals("")) {
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        textView.setVisibility(View.INVISIBLE);
+                        // resetting the timer
+                        if (!isTimerRunning) {
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        } else {
+                            isTimerRunning = true;
+                            mCountDownTimer.cancel();
+                            mCountDownTimer.start();
+                        }
+                        deleteSnap(num - 1);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+
+                    }
+                });
+                // if there is text alone with the image
+            } else {
+                Picasso.get().load(imageUrls.get(num)).fit().centerCrop().into(snapView, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        textView.setText(text.get(num));
+                        textView.setVisibility(View.VISIBLE);
+                        // resetting the timer
+                        if (!isTimerRunning) {
+                            isTimerRunning = true;
+                            mCountDownTimer.start();
+                        } else {
+                            isTimerRunning = true;
+                            mCountDownTimer.cancel();
+                            mCountDownTimer.start();
+                        }
+                        deleteSnap(num-1);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+
+                    }
+                });
             }
-            return false;
+            // if there are no more images to show
+        } else if (num >= imageUrls.size()) {
+            // cancelling the countdown timer
+            if (isTimerRunning) {
+                isTimerRunning = false;
+                mCountDownTimer.cancel();
+            }
+            // returning back to the list view
+            deleteSnap(num-1);
+            Intent back = new Intent (getApplicationContext(), UserActivity.class);
+            startActivity(back);
         }
     }
 
@@ -173,6 +316,20 @@ public class ImageDisplayActivity extends AppCompatActivity {
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
 
+            }
+        });
+
+        // deleting image from firebase storage by their download url
+        StorageReference photoRef = FirebaseStorage.getInstance().getReferenceFromUrl(imageUrls.get(position));
+        photoRef.delete().addOnSuccessListener(new OnSuccessListener<Void>() {
+            @Override
+            public void onSuccess(Void aVoid) {
+                Log.i("STORAGE DELETION: ", "SUCCESSFUL");
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                Log.i("STORAGE DELETION: ", "FAILED");
             }
         });
     }

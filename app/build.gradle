@@ -34,7 +34,10 @@ dependencies {
     implementation 'com.google.android.gms:play-services-location:16.0.0'
     // Picasso library
     implementation 'com.squareup.picasso:picasso:2.71828'
-
+    // firebase firestore
+    implementation 'com.google.firebase:firebase-firestore:18.0.1'
+    // firebase messaging
+    implementation 'com.google.firebase:firebase-messaging:17.3.4'
 }
 
 apply plugin: 'com.google.gms.google-services'

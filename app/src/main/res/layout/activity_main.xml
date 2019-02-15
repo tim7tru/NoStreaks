@@ -23,7 +23,7 @@
         android:id="@+id/button"
         android:layout_width="0dp"
         android:layout_height="64dp"
-        android:background="@color/colorAccent"
+        android:background="@color/pinkColor"
         android:fontFamily="@font/roboto_medium"
         android:onClick="onClick"
         android:text="@string/log_in"

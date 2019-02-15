@@ -1,21 +1,34 @@
+/**
+ * senduserlistactivity -> displays the listview of all registered users
+ * - where the user can choose who to send the image too
+ * - will display a progress dialog once the send button is clicked
+ * - will move the user back to the listfragment once the snap is sent
+ */
+
 package com.example.snapchat_clone;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.v4.content.res.ResourcesCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.Continuation;
@@ -31,11 +44,13 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,6 +61,7 @@ public class SendUserListActivity extends AppCompatActivity {
     // widgets
     ListView userList;
     ImageView sendButton;
+    ImageView backButton;
 
     // list
     ArrayList<String> userNames = new ArrayList<>();
@@ -69,6 +85,10 @@ public class SendUserListActivity extends AppCompatActivity {
     // firebase storage file path
     String FIREBASE_IMAGE_STORAGE = "photos/users/";
 
+    // progress dialog for uploading photos
+    ProgressDialog progressDialog;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,9 +96,24 @@ public class SendUserListActivity extends AppCompatActivity {
 
         // initializing
         sendButton = findViewById(R.id.sendButton);
+        backButton = findViewById(R.id.backButton);
         userList = findViewById(R.id.userList);
+        userList.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
         userList.setChoiceMode(AbsListView.CHOICE_MODE_MULTIPLE);
-        arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_checked, userNames);
+        arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_activated_1, userNames) {
+            // updating the look of the text in the list view
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView textView = view.findViewById(android.R.id.text1);
+                Typeface typeface = ResourcesCompat.getFont(getApplicationContext(), R.font.roboto_medium);
+                textView.setTextSize(24);
+                textView.setTypeface(typeface);
+                textView.setTextColor(Color.DKGRAY);
+                return view;
+            }
+        };
+
 
         // firebase storage
         storageReference = FirebaseStorage.getInstance().getReference();
@@ -86,15 +121,29 @@ public class SendUserListActivity extends AppCompatActivity {
         // getting the current user's display name
         displayName = UserActivity.username;
 
+        /*
+            on click listener for the back button to go back to the camera fragment when tapped
+         */
+        backButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("BUTTON CLICKED: ", "back button");
+                finish();
+            }
+        });
+
         // to get all the display names of registered users
         ValueEventListener eventListener = new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for (DataSnapshot ds : dataSnapshot.getChildren()) {
-                    String displayName = (String) ds.child("displayName").getValue();
-                    Log.i("Display name: ", displayName);
-                    // adding all the display names of registered users into an array list
-                    userNames.add(displayName);
+                    String name = (String) ds.child("displayName").getValue();
+                    Log.i("Display name: ", name);
+
+                    // checks to make sure you are not adding your own display name to the array list
+                    if (!name.equals(displayName)) {
+                        userNames.add(name);
+                    }
                 }
                 Log.i("Array Size: ", Integer.toString(userNames.size()));
             }
@@ -128,19 +177,39 @@ public class SendUserListActivity extends AppCompatActivity {
         userList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                CheckedTextView checkedTextView = (CheckedTextView) view;
 
-                // adds the checked user to an array list
-                if (checkedTextView.isChecked()) {
+                View selectedItemView = view;
+                TextView text = view.findViewById(android.R.id.text1);
+
+                if (selectedItemView.isActivated()) {
+                    // adds the selected user to an array list
                     sendTo.add(userNames.get(position));
+                    text.setTextColor(Color.WHITE);
                     Log.i("User Selected: ", userNames.get(position));
                 } else {
                     // removes the selected user from the array list
                     sendTo.remove(userNames.get(position));
-                    Log.i("Delete User: ", userNames.get(position));
+                    text.setTextColor(Color.DKGRAY);
                 }
 
                 Log.i("Send to: ", sendTo.toString());
+
+
+                //UPDATED February 8, 2019 by Nicole
+                // changed the array adapter to simplelistactivated 1
+//                CheckedTextView checkedTextView = (CheckedTextView) view;
+//
+//                // adds the checked user to an array list
+//                if (checkedTextView.isChecked()) {
+//                    sendTo.add(userNames.get(position));
+//                    Log.i("User Selected: ", userNames.get(position));
+//                } else {
+//                    // removes the selected user from the array list
+//                    sendTo.remove(userNames.get(position));
+//                    Log.i("Delete User: ", userNames.get(position));
+//                }
+//
+//                Log.i("Send to: ", sendTo.toString());
             }
         });
 
@@ -153,8 +222,12 @@ public class SendUserListActivity extends AppCompatActivity {
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.i("Upload Photo: ", "attempting to upload photo");
-                Toast.makeText(SendUserListActivity.this, "Attempting to send photo...", Toast.LENGTH_SHORT).show();
+
+                // progress dialog
+                progressDialog = new ProgressDialog(SendUserListActivity.this);
+                progressDialog.setMessage("Sending Snap");
+                progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+                progressDialog.show();
 
                 // get the userID of the current user
                 String userID = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -166,6 +239,8 @@ public class SendUserListActivity extends AppCompatActivity {
                 // grabbing the temporary file from the intent
                 Intent intent = getIntent();
                 String filePath = intent.getStringExtra("data");
+                final String text = intent.getStringExtra("text");
+                Log.i("STRING: ", text);
                 File file = new File(filePath);
 
                 // decoding the file into a byte array
@@ -181,33 +256,13 @@ public class SendUserListActivity extends AppCompatActivity {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
                         Log.i("Photo upload:", "SUCCESS");
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.i("Photo upload: ", "FAILED");
-                    }
-                });
 
-                // getting the image URL after the image is uploaded
-                Task<Uri> urlTask = uploadTask.continueWithTask(new Continuation<UploadTask.TaskSnapshot, Task<Uri>>() {
-                    @Override
-                    public Task<Uri> then(@NonNull Task<UploadTask.TaskSnapshot> task) throws Exception {
-                        if (!task.isSuccessful()) {
-                            // unable to upload download url into the firebase database
-                            throw task.getException();
-                        }
-                        return myRef.getDownloadUrl();
-                    }
-                    // if successfully uploaded
-                }).addOnCompleteListener(new OnCompleteListener<Uri>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Uri> task) {
-                        if (task.isSuccessful()) {
-
-                            // firebase download url
-                            Uri firebaseUrl = task.getResult();
-                            Log.i("Firebase URL: ",firebaseUrl.toString());
+                        myRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                progressDialog.cancel();
+                                Uri firebaseUrl = uri;
+                                Log.i("FIREBASE URL: ", uri.toString());
 
                             // add the image URL into the firebase database
                             Log.i("add photo to database: ", "starting to add photo to database");
@@ -222,16 +277,34 @@ public class SendUserListActivity extends AppCompatActivity {
                             for (int i = 0; i < sendTo.size(); i++) {
                                 DatabaseReference mPhotos = mUser.child(sendTo.get(i)).child("receivedPhotos").child(FirebaseAuth.getInstance().getCurrentUser().getUid()); // referencing the right database
                                 String photoKey = mPhotos.push().getKey();
-                                mPhotos.child(photoKey).setValue(firebaseUrl.toString());
+                                mPhotos.child(photoKey).child("url").setValue(firebaseUrl.toString());
+                                mPhotos.child(photoKey).child("text").setValue(text);
+
+                                // adding notifications to firebase database
+                                DatabaseReference mNotifications = mUser.child(sendTo.get(i)).child("notifications");
+                                String notificationKey = mNotifications.push().getKey();
+                                mNotifications.child(notificationKey).child("from").setValue(displayName);
+
                             }
-                            Toast.makeText(SendUserListActivity.this, "Sent photos!", Toast.LENGTH_SHORT).show();
 
                             // return to the list view on finishing sending photo
                             Intent goBack = new Intent(getApplicationContext(), UserActivity.class);
                             startActivity(goBack);
-                        }
-                    }
+                            }
+                        });
 
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        progressDialog.cancel();
+                        Toast.makeText(SendUserListActivity.this, "Photo Upload FAILED", Toast.LENGTH_SHORT).show();
+                    }
+                }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+
+                    }
                 });
             }
         });
