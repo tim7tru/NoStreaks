@@ -179,14 +179,17 @@ public class SendUserListActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
                 View selectedItemView = view;
+                TextView text = view.findViewById(android.R.id.text1);
 
                 if (selectedItemView.isActivated()) {
                     // adds the selected user to an array list
                     sendTo.add(userNames.get(position));
+                    text.setTextColor(Color.WHITE);
                     Log.i("User Selected: ", userNames.get(position));
                 } else {
                     // removes the selected user from the array list
                     sendTo.remove(userNames.get(position));
+                    text.setTextColor(Color.DKGRAY);
                 }
 
                 Log.i("Send to: ", sendTo.toString());
