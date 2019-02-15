@@ -146,7 +146,9 @@ public class listFragment extends Fragment {
                 photos.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                        Log.i("DataSnapshot", dataSnapshot.toString());
                         for (DataSnapshot ds : dataSnapshot.getChildren()) {
+                            Log.i("Runs", "runs");
 
                             // add snapcount for the current user and display it in the listview
                             snapCount.setVisibility(View.VISIBLE);
@@ -158,6 +160,7 @@ public class listFragment extends Fragment {
 
                             	// check to not add current user into the list
                                 if (!userId.get(uid.get(i)).equals(displayName)) {
+                                    Log.i("Runs", "runs");
                                     String username = userId.get(uid.get(i));
                                     String snapCount = String.valueOf(ds.child("receivedPhotos").child(uid.get(i)).getChildrenCount());
                                     String messageCount = String.valueOf(ds.child("receivedMessages").child(uid.get(i)).getChildrenCount());
@@ -196,7 +199,7 @@ public class listFragment extends Fragment {
 
             }
         };
-        mUserRef.orderByKey().addValueEventListener(userID);
+        mUserRef.addValueEventListener(userID);
 
 
         // setting up the array adapter for the list view
