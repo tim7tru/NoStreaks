@@ -24,6 +24,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -222,7 +223,7 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
                 parameters.setPreviewFrameRate(30);
 
                 // focus
-                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+//                parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 
                 // To find the best image size for your camera
                 Camera.Size bestSize = null;
@@ -354,12 +355,11 @@ public class sendFragment extends Fragment implements SurfaceHolder.Callback {
         parameters.setPreviewFrameRate(30);
 
         // focus
-        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+//        parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
 
         // To find the best image size for your camera
-        Camera.Size bestSize = null;
         List<Camera.Size> sizeList = camera.getParameters().getSupportedPreviewSizes();
-        bestSize = sizeList.get(0);
+        Camera.Size bestSize = sizeList.get(0);
 
         for (int i = 1; i < sizeList.size(); i++) {
             if (sizeList.get(i).width * sizeList.get(i).height > bestSize.width * bestSize.height) {
